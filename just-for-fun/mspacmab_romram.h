@@ -54,13 +54,6 @@ typedef unsigned short    word;
 #define BADSPACEBASE   void
 #define code   void
 
-typedef struct tile_coord_xy_t tile_coord_xy_t, *Ptile_coord_xy_t;
-
-struct tile_coord_xy_t { // 0x1d == wraparound -> 0x3d. 0x3e == wraparound -> 0x1e.
-    byte x;
-    byte y;
-};
-
 typedef struct hardware_floating_sprite_t hardware_floating_sprite_t, *Phardware_floating_sprite_t;
 
 typedef enum color_e {
@@ -126,6 +119,13 @@ typedef enum tile_coord_changes_y_e {
     left_right=0,
     up=255
 } tile_coord_changes_y_e;
+
+typedef struct sprite_coord_yx_t sprite_coord_yx_t, *Psprite_coord_yx_t;
+
+struct sprite_coord_yx_t { // 0x1d == wraparound -> 0x3d. 0x3e == wraparound -> 0x1e.
+    byte y; // bottom to top = decreases (0x22..0x3e)
+    byte x; // left to right = decreases (0x1e..0x3d)
+};
 
 typedef struct difficulty1_6_bytes_t difficulty1_6_bytes_t, *Pdifficulty1_6_bytes_t;
 
@@ -477,7 +477,12 @@ struct cmd_5_playsound_t { // sound code	play a sound (eg 10=ghost bump)
 };
 
 typedef enum sprite_e {
-    RED_GHOST=1
+    BLUE=2,
+    FRUIT=5,
+    ORANGE=3,
+    PACMAN=4,
+    PINK=1,
+    RED=0
 } sprite_e;
 
 typedef enum ghost_substate_e {
@@ -486,13 +491,6 @@ typedef enum ghost_substate_e {
     GOING_FOR_PACMAN=1,
     GOING_TO_THE_DOOR=3
 } ghost_substate_e;
-
-typedef struct tile_coord_yx_t tile_coord_yx_t, *Ptile_coord_yx_t;
-
-struct tile_coord_yx_t { // 0x1d == wraparound -> 0x3d. 0x3e == wraparound -> 0x1e.
-    byte y; // bottom to top = decreases (0x22..0x3e)
-    byte x; // left to right = decreases (0x1e..0x3d)
-};
 
 typedef struct difficulty3_t difficulty3_t, *Pdifficulty3_t;
 
@@ -532,6 +530,15 @@ struct ghost_speed_bit_patterns_t { // difficulty dependant
     dword specific_state; // eg. tunnel areas
 };
 
+typedef enum enum_1 {
+    BLUE=2,
+    FRUIT=5,
+    ORANGE=3,
+    PACMAN=4,
+    PINK=1,
+    RED=0
+} enum_1;
+
 typedef struct cmd_F_end_t cmd_F_end_t, *Pcmd_F_end_t;
 
 struct cmd_F_end_t {
@@ -542,7 +549,7 @@ typedef struct cmd_1_setpos_t cmd_1_setpos_t, *Pcmd_1_setpos_t;
 
 struct cmd_1_setpos_t { // position
     byte cmd_F1;
-    struct tile_coord_yx_t coord;
+    struct sprite_coord_yx_t coord;
 };
 
 typedef enum ghost_state_e { // LEFT for blue, RIGHT for orange
@@ -619,17 +626,17 @@ typedef enum main_state_e {
 
 
 void reset(void);
-void memset(byte *s,byte c,byte n);
+void * memset(byte *s,byte c,byte n);
 void RET(void);
 void T10_setup_difficulty(undefined2 param_1);
 byte dereference_pointer_to_byte(byte *lookup_table,byte index);
 dereference_word_t dereference_pointer_to_word(word *lookup_table,byte index);
-void jump_table(undefined *lookup_table,byte index);
-void insert_task(word *data);
+void jump_table_fn(undefined *lookup_table,byte index);
+void insert_task(task_core_t *task);
 void add_timed_task(task_timed_t *task);
 void vblank(bool test_mode);
-void add_to_task_list(byte cmd,byte arg);
-byte * convert_xy_to_screen_position(tile_coord_yx_t coord);
+void add_to_task_list(task_core_e task_value,byte task_param);
+byte * convert_xy_to_screen_position(sprite_coord_yx_t coord);
 void interrupt_vector(void);
 void update_timers_and_random_number(void);
 void execute_TIMED_task(void);
@@ -669,9 +676,9 @@ void pacman_check_to_release_inky(void);
 void pacman_check_to_release_orange_ghost(void);
 void pacman_check_for_demo_completion(void);
 void pacman_end_demo_and_return(void);
-void add_task_to_print_text(byte text);
+void add_task_to_print_text(text_e text);
 void TT02_increase_subroutine_DEMO_state(void);
-void pacman_used_in_demo_mode(char param_1,undefined param_2);
+void pacman_used_in_demo_mode(char param_1);
 undefined pacman_used_during_attract_mode(void);
 void pacman_only_used_during_attract_mode(undefined param_1,undefined *param_2);
 byte execute_COIN_INSERTED_task_state(void);
@@ -694,7 +701,7 @@ void P06_switch_player(undefined param_1);
 void P08_end_of_demo(void);
 void P09_prepare_screen_level(void);
 void P0B_loop_state_P03(void);
-void P0C_end_of_level_clear_sound(void);
+void P0C_end_of_level_clear_sound(task_timed_t *task);
 void P0E_flash_screen_on(void);
 void change_maze_color(byte color);
 void P10_flash_screen_off(void);
@@ -720,7 +727,6 @@ void is_time_to_reverse_ghost_direction(void);
 void change_background(void);
 void check_for_fruit_to_come_out(void);
 void TT04_clear_fruit_points(void);
-void RET(void);
 void TT05_clear_fruit_position(void);
 void update_ghost_and_pacman_state(void);
 void check_for_ghosts_being_eaten_and_set_ghost_states_accordingly(void);
@@ -792,12 +798,12 @@ void reverse_blue_ghost_direction(undefined param_1);
 void is_reverse_orange_ghost_direction_time(void);
 void reverse_orange_ghost_direction(undefined param_1);
 void vblank_continuation(bool test_mode);
-tile_coord_yx_t update_coord(tile_coord_yx_t *sprite_location,tile_coord_yx_t *seek_location);
-byte get_from_screen_position(tile_coord_yx_t *sprite_location,tile_coord_yx_t *seek_location);
-tile_coord_yx_t convert_sprite_position_to_tile_position(tile_coord_yx_t sprite_position);
-byte * convert_xy_to_screen_position(tile_coord_yx_t coord);
-tile_coord_yx_t convert_xy_to_color_screen_position(tile_coord_yx_t coord);
-void check_ghost_entering_tunnel_slowdown(tile_coord_yx_t coord,byte *delay);
+sprite_coord_yx_t update_coord(sprite_coord_yx_t *sprite_location,sprite_coord_yx_t *seek_location);
+byte get_from_screen_position(sprite_coord_yx_t *sprite_location,sprite_coord_yx_t *seek_location);
+sprite_coord_yx_t convert_sprite_position_to_tile_position(sprite_coord_yx_t sprite_position);
+byte * convert_xy_to_screen_position(sprite_coord_yx_t coord);
+sprite_coord_yx_t convert_xy_to_color_screen_position(sprite_coord_yx_t coord);
+void check_ghost_entering_tunnel_slowdown(sprite_coord_yx_t coord,byte *delay);
 void leave_house_check_pink_ghost(void);
 void release_pink_ghost_from_the_ghost_house(void);
 void leave_house_check_blue_ghost(void);
@@ -832,6 +838,7 @@ void pacman_3rd_intermission_junk2(void);
 void pacman_3rd_intermission_junk3(void);
 void pacman_3rd_intermission_junk4(void);
 void startup_test(void);
+void execute_CORE_task(void);
 void T16_increase_main_subroutine_number(void);
 void T00_clear_whole_screen_or_maze(byte param);
 void clear_hardware_video_ram(void);
@@ -859,9 +866,9 @@ void T0D_pink_ghost_movement_when_power_pill(void);
 void T0E_blue_ghost_movement_when_power_pill(void);
 void T0F_orange_ghost_movement_when_power_pill(void);
 void T17_pacman_AI_movement_when_demo(void);
-character_orientation_e get_best_orientation(character_orientation_e current_orientation,tile_coord_yx_t ghost_position);
-uint3 distance_check(tile_coord_yx_t current_position_tile,tile_coord_yx_t destination_tile,character_orientation_e orientation);
-word get_distance(tile_coord_yx_t *ghost_position,tile_coord_yx_t *pacman_position);
+character_orientation_e get_best_orientation(character_orientation_e current_orientation,sprite_coord_yx_t ghost_position);
+uint3 distance_check(sprite_coord_yx_t current_position_tile,sprite_coord_yx_t destination_tile,character_orientation_e orientation);
+word get_distance(sprite_coord_yx_t *ghost_position,sprite_coord_yx_t *pacman_position);
 word square(byte value);
 byte random(void);
 void T13_clears_sprites(void);
@@ -922,7 +929,7 @@ void intermissions_and_attract_mode_animation_main_routine(byte word_intermissio
 byte animation_code_f0_loop_sub_stuff(byte param_1);
 void generate_animations(byte animation_seek_index);
 word animation_code_f0_and_f1_sub_stuff(undefined2 param_1);
-void mspacman_select_song(undefined2 param_1,word *param_2,byte *param_3,short param_4);
+void mspacman_select_song(ushort param_1,word *param_2,byte *param_3,short param_4);
 void clear_fruit_position(void);
 void FUN_ram_367f(void);
 void draw_easter_egg__Made_By_Namco(void);

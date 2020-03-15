@@ -1,4 +1,4 @@
-#include "mspacmab_romram.h"
+#include "mspacmab.h"
 
 
 
@@ -1022,13 +1022,12 @@ void reset(void)
 
 {
   ushort uVar1;
+  byte c;
   task_core_e index;
   char cVar2;
   byte n;
-  byte c;
   in0_t *piVar3;
-  byte *pbVar4;
-  hardware_floating_sprite_t *s;
+  byte *s;
   
                     // 
                     //   rst 0 - initialization
@@ -1039,97 +1038,109 @@ void reset(void)
                     // 
   piVar3 = &hardware_IN0;
   cVar2 = '\b';
+  c = 0;
   do {
     *piVar3 = (in0_t)0x0;
     piVar3 = (in0_t *)((ushort)piVar3 & 0xff00 | (ushort)(byte)((char)piVar3 + 1));
     cVar2 = cVar2 + -1;
   } while (cVar2 != '\0');
-  pbVar4 = hardware_video_ram;
+  s = hardware_video_ram;
   cVar2 = '\x04';
   do {
+    write_volatile_1(hardware_DSW2_watchdog,c);
+    write_volatile_1(hardware_coin_counter,c);
+    c = 0x40;
     do {
-      *pbVar4 = 0x40;
-      c = (char)pbVar4 + 1;
-      uVar1 = (ushort)pbVar4 & 0xff00;
-      pbVar4 = (byte *)(uVar1 | c);
-    } while (c != 0);
-    pbVar4 = (byte *)((ushort)(byte)((char)(uVar1 >> 8) + 1) << 8);
+      *s = 0x40;
+      n = (char)s + 1;
+      uVar1 = (ushort)s & 0xff00;
+      s = (byte *)(uVar1 | n);
+    } while (n != 0);
+    s = (byte *)((ushort)(byte)((char)(uVar1 >> 8) + 1) << 8);
     cVar2 = cVar2 + -1;
   } while (cVar2 != '\0');
   cVar2 = '\x04';
   do {
+    write_volatile_1(hardware_DSW2_watchdog,c);
+    write_volatile_1(hardware_coin_counter,0);
+    c = 0xf;
     do {
-      *pbVar4 = 0xf;
-      c = (char)pbVar4 + 1;
-      uVar1 = (ushort)pbVar4 & 0xff00;
-      pbVar4 = (byte *)(uVar1 | c);
-    } while (c != 0);
-    pbVar4 = (byte *)((ushort)(byte)((char)(uVar1 >> 8) + 1) << 8);
+      *s = 0xf;
+      n = (char)s + 1;
+      uVar1 = (ushort)s & 0xff00;
+      s = (byte *)(uVar1 | n);
+    } while (n != 0);
+    s = (byte *)((ushort)(byte)((char)(uVar1 >> 8) + 1) << 8);
     cVar2 = cVar2 + -1;
   } while (cVar2 != '\0');
   setInterruptMode(1);
-  hardware_coin_counter = 0;
+  write_volatile_1(hardware_coin_counter,0);
   hardware_IN0 = (in0_t)0x1;
   enableMaskableInterrupts();
   halt();
-  hardware_DSW2_watchdog = 1;
+  write_volatile_1(hardware_DSW2_watchdog,1);
   c = 0;
-  ARRAY_ram_4f5c._98_2_ = (undefined *)0x2359;
+  ARRAY_ram_4f5c._98_2_ = 0x2359;
   memset((byte *)&hardware_IN0,0,8);
-  s = &start_of_sprites_address;
   n = 0xbe;
-  ARRAY_ram_4f5c._98_2_ = (undefined *)0x235f;
-  memset((byte *)&start_of_sprites_address,c,0xbe);
-  ARRAY_ram_4f5c._98_2_ = (undefined *)0x2360;
-  memset((byte *)s,c,n);
-  ARRAY_ram_4f5c._98_2_ = (undefined *)0x2361;
-  memset((byte *)s,c,n);
-  ARRAY_ram_4f5c._98_2_ = (undefined *)0x2362;
-  memset((byte *)s,c,n);
-  ARRAY_ram_4f5c._98_2_ = (undefined *)0x2368;
+  ARRAY_ram_4f5c._98_2_ = 0x235f;
+  s = (byte *)memset((byte *)&start_of_sprites_address,c,0xbe);
+  ARRAY_ram_4f5c._98_2_ = 0x2360;
+  s = (byte *)memset(s,c,n);
+  ARRAY_ram_4f5c._98_2_ = 0x2361;
+  s = (byte *)memset(s,c,n);
+  ARRAY_ram_4f5c._98_2_ = 0x2362;
+  memset(s,c,n);
+  ARRAY_ram_4f5c._98_2_ = 0x2368;
   memset((byte *)&hardware_IN1,c,0x40);
-  ARRAY_ram_4f5c._98_2_ = (undefined *)0x236e;
-  hardware_DSW2_watchdog = c;
-  hardware_DSW2_watchdog = T06_clears_color_RAM();
-  ARRAY_ram_4f5c._98_2_ = (undefined *)0x2376;
-  hardware_DSW2_watchdog = T00_clear_whole_screen_or_maze(0);
-  p_task_list_next_free = task_list;
-  p_task_list_begin = task_list;
-  ARRAY_ram_4f5c._98_2_ = (undefined *)0x2387;
-  memset((byte *)task_list,0xff,0x40);
+  write_volatile_1(hardware_DSW2_watchdog,c);
+  ARRAY_ram_4f5c._98_2_ = 0x236e;
+  c = T06_clears_color_RAM();
+  write_volatile_1(hardware_DSW2_watchdog,c);
+  ARRAY_ram_4f5c._98_2_ = 0x2376;
+  c = T00_clear_whole_screen_or_maze(0);
+  write_volatile_1(hardware_DSW2_watchdog,c);
+  p_task_list_next_free = tasks_to_execute_outside_of_irq;
+  p_task_list_begin = tasks_to_execute_outside_of_irq;
+  ARRAY_ram_4f5c._98_2_ = 0x2387;
+  memset((byte *)tasks_to_execute_outside_of_irq,0xff,0x40);
   hardware_IN0 = (in0_t)0x1;
   enableMaskableInterrupts();
+  s = _STACK_END;
   do {
-    index = p_task_list_begin->value;
-  } while ((char)index < '\0');
-  p_task_list_begin->value = ~clear_whole_screen_or_maze;
-  uVar1 = (ushort)p_task_list_begin & 0xff00;
-  *(undefined *)(uVar1 | (byte)((char)p_task_list_begin + 1)) = 0xff;
-  c = (char)p_task_list_begin + 2;
-  p_task_list_begin = (task_core_t *)(uVar1 | c);
-  if (c == 0) {
-    p_task_list_begin = (task_core_t *)CONCAT11((char)(uVar1 >> 8),0xc0);
-  }
-  ARRAY_ram_4f5c._98_2_ = &execute_CORE_task;
-  ARRAY_ram_4f5c._96_2_ = core_fn_table;
-  jump_table((undefined *)core_fn_table,index);
-  return;
+    do {
+      index = p_task_list_begin->value;
+    } while ((char)index < '\0');
+    p_task_list_begin->value = ~clear_whole_screen_or_maze;
+    uVar1 = (ushort)p_task_list_begin & 0xff00;
+    *(undefined *)(uVar1 | (byte)((char)p_task_list_begin + 1)) = 0xff;
+    c = (char)p_task_list_begin + 2;
+    p_task_list_begin = (task_core_t *)(uVar1 | c);
+    if (c == 0) {
+      p_task_list_begin = (task_core_t *)CONCAT11((char)(uVar1 >> 8),0xc0);
+    }
+    *(undefined2 *)(s + -2) = 0x238d;
+                    // WARNING: Return address prevents inlining here
+    *(undefined2 *)(s + -4) = 0x23a8;
+    jump_table_fn(*(undefined **)(s + -4),index);
+    s = s + -2;
+  } while( true );
 }
 
 
 
-void memset(byte *s,byte c,byte n)
+// rst 8 - memset()
+// Fill HL to HL+B with A
+
+void * memset(byte *s,byte c,byte n)
 
 {
   do {
-                    // rst 8 - memset()
-                    // Fill HL to HL+B with A
-                    // 
     *s = c;
     s = s + 1;
     n = n - 1;
   } while (n != 0);
-  return;
+  return s;
 }
 
 
@@ -1222,6 +1233,7 @@ dereference_word_t dereference_pointer_to_word(word *lookup_table,byte index)
 
 
 
+// WARNING: This is an inlined function
 // rst 20 (jump table)
 // 
 // Uses A as a vector to jump to the location indicated by 2*A after the call
@@ -1229,7 +1241,7 @@ dereference_word_t dereference_pointer_to_word(word *lookup_table,byte index)
 // jump to #CDAB
 // 
 
-void jump_table(undefined *lookup_table,byte index)
+void jump_table_fn(undefined *lookup_table,byte index)
 
 {
   byte bVar1;
@@ -1243,46 +1255,63 @@ void jump_table(undefined *lookup_table,byte index)
 
 
 
-void insert_task(word *data)
+// WARNING: This is an inlined function
+// rst 28
+// takes the 2 bytes after the call as data and inserts them into the task list
+// 
+
+void insert_task(task_core_t *task)
 
 {
-                    // rst 28
-                    // takes the 2 bytes after the call as data and inserts them into the task list
-                    // 
-  add_to_task_list(*(byte *)data,*(byte *)((short)data + 1));
+  ushort uVar1;
+  undefined uVar2;
+  byte bVar3;
+  
+  uVar2 = task->param;
+  p_task_list_next_free->value = task->value;
+  uVar1 = (ushort)p_task_list_next_free & 0xff00;
+  *(undefined *)(uVar1 | (byte)((char)p_task_list_next_free + 1)) = uVar2;
+  bVar3 = (char)p_task_list_next_free + 2;
+  p_task_list_next_free = (task_core_t *)(uVar1 | bVar3);
+  if (bVar3 == 0) {
+    p_task_list_next_free = (task_core_t *)CONCAT11((char)(uVar1 >> 8),0xc0);
+  }
   return;
 }
 
 
 
+// WARNING: This is an inlined function
+
 void add_timed_task(task_timed_t *task)
 
 {
-  char cVar1;
-  task_timed_t *ptVar2;
+  byte rev_index;
+  byte rev_index_found_empty;
+  task_timed_t *tt_seek;
   
-  ptVar2 = timed_task_table;
-  cVar1 = '\x10';
+  tt_seek = scheduled_tasks_list_to_execute_inside_of_irq;
+  rev_index = 16;
   do {
-    if (*(char *)ptVar2 == '\0') {
+    if (*(char *)tt_seek == '\0') {
                     // empty space found
-      cVar1 = '\x03';
+      rev_index_found_empty = 3;
       do {
                     // copy task_timed_t to task list
-        *(code *)ptVar2 = *(code *)task;
+        *(code *)tt_seek = *(code *)task;
         task = (task_timed_t *)&task->index;
-        ptVar2 = (task_timed_t *)((ushort)ptVar2 & 0xff00 | (ushort)(byte)((char)ptVar2 + 1));
-        cVar1 = cVar1 + -1;
-      } while (cVar1 != '\0');
+        tt_seek = (task_timed_t *)((ushort)tt_seek & 0xff00 | (ushort)(byte)((char)tt_seek + 1));
+        rev_index_found_empty = rev_index_found_empty - 1;
+      } while (rev_index_found_empty != 0);
                     // WARNING: Could not recover jumptable at 0x0064. Too many branches
                     // WARNING: Treating indirect jump as call
                     // jmp after task ptr...
       (*(code *)task)();
       return;
     }
-    ptVar2 = (task_timed_t *)((ushort)ptVar2 & 0xff00 | (ushort)(byte)((char)ptVar2 + 3));
-    cVar1 = cVar1 + -1;
-  } while (cVar1 != '\0');
+    tt_seek = (task_timed_t *)((ushort)tt_seek & 0xff00 | (ushort)(byte)((char)tt_seek + 3));
+    rev_index = rev_index - 1;
+  } while (rev_index != 0);
   return;
 }
 
@@ -1316,15 +1345,15 @@ void vblank(bool test_mode)
 // B and C have the data bytes
 // 
 
-void add_to_task_list(byte cmd,byte arg)
+void add_to_task_list(task_core_e task_value,byte task_param)
 
 {
   ushort uVar1;
   byte bVar2;
   
-  p_task_list_next_free->value = cmd;
+  p_task_list_next_free->value = task_value;
   uVar1 = (ushort)p_task_list_next_free & 0xff00;
-  *(byte *)(uVar1 | (byte)((char)p_task_list_next_free + 1)) = arg;
+  *(byte *)(uVar1 | (byte)((char)p_task_list_next_free + 1)) = task_param;
   bVar2 = (char)p_task_list_next_free + 2;
   p_task_list_next_free = (task_core_t *)(uVar1 | bVar2);
   if (bVar2 == 0) {
@@ -1338,16 +1367,15 @@ void add_to_task_list(byte cmd,byte arg)
 // converts pac-mans sprites positions into a grid position
 // 
 
-byte * convert_xy_to_screen_position(tile_coord_yx_t coord)
+byte * convert_xy_to_screen_position(sprite_coord_yx_t coord)
 
 {
   char cVar1;
   
   cVar1 = (char)((ushort)coord >> 8);
-  return hardware_video_ram +
+  return hardware_screen_maze_area +
          (ushort)(byte)((char)coord - 0x20) +
-         CONCAT11(((byte)(cVar1 * '\b') >> 7) << 1 | (byte)(cVar1 * '\x10') >> 7,cVar1 * ' ') + 0x40
-  ;
+         CONCAT11(((byte)(cVar1 * '\b') >> 7) << 1 | (byte)(cVar1 * '\x10') >> 7,cVar1 * ' ');
 }
 
 
@@ -1365,19 +1393,20 @@ void interrupt_vector(void)
   undefined2 uVar2;
   undefined2 in_AF;
   byte c;
-  task_core_e index;
-  short sVar3;
-  char cVar4;
+  task_core_e index_00;
+  short index;
+  char cVar3;
+  sound_channel_20bits_t *psVar4;
+  floating_sprite_coord_t *pfVar5;
+  ushort uVar6;
   byte n;
-  sound_channel_20bits_t *psVar5;
-  byte *pbVar6;
-  ushort uVar7;
-  floating_sprite_coord_t *pfVar8;
-  sound_channel_20bits_t *psVar9;
-  hardware_floating_sprite_t *s;
+  sound_channel_20bits_t *psVar7;
+  hardware_floating_sprite_t *phVar8;
+  floating_sprite_coord_t *pfVar9;
   in0_t *piVar10;
+  byte *s;
   
-  hardware_DSW2_watchdog = (byte)((ushort)in_AF >> 8);
+  write_volatile_1(hardware_DSW2_watchdog,(byte)((ushort)in_AF >> 8));
   hardware_IN0 = (in0_t)0x0;
   disableMaskableInterrupts();
                     // save registers. they are restored starting at #01BF
@@ -1385,15 +1414,15 @@ void interrupt_vector(void)
                     //  VBLANK - 1 (SOUND)
                     //  load the sound into the hardware
                     // 
-  psVar9 = &channel1;
-  psVar5 = &hardware_wave_info;
-  sVar3 = 0x10;
+  psVar7 = &channel1;
+  psVar4 = &hardware_wave_info;
+  index = 0x10;
   do {
-    psVar5->freq0 = psVar9->freq0;
-    psVar5 = (sound_channel_20bits_t *)&psVar5->freq1;
-    psVar9 = (sound_channel_20bits_t *)&psVar9->freq1;
-    sVar3 = sVar3 + -1;
-  } while (sVar3 != 0);
+    psVar4->freq0 = psVar7->freq0;
+    psVar4 = (sound_channel_20bits_t *)&psVar4->freq1;
+    psVar7 = (sound_channel_20bits_t *)&psVar7->freq1;
+    index = index + -1;
+  } while (index != 0);
                     //  voice 1 wave select
                     // 
   hardware_wave_select_1 = channel_1_wave.sel;
@@ -1413,60 +1442,65 @@ void interrupt_vector(void)
     hardware_wave_select_3 = channel_3_effect.table[0];
   }
                     // copy last frame calculated sprite data into sprite buffer
-                    // 
-  s = &red_ghost_sprite;
-  pbVar6 = sprite_buffer;
-  sVar3 = 0x1c;
+  phVar8 = &red_ghost_sprite;
+  pfVar5 = sprite_positions_for_spriteram2;
+  index = 28;
   do {
-    *pbVar6 = *(byte *)s;
-    uVar2 = sprite_number_and_color_for_spriteram._2_2_;
-    pbVar6 = pbVar6 + 1;
-    s = (hardware_floating_sprite_t *)&s->color;
-    sVar3 = sVar3 + -1;
-  } while (sVar3 != 0);
+    pfVar5->x = *(byte *)phVar8;
+    uVar2 = sprite_number_and_color_for_spriteram[1];
+    pfVar5 = (floating_sprite_coord_t *)&pfVar5->y;
+    phVar8 = (hardware_floating_sprite_t *)&phVar8->color;
+    index = index + -1;
+  } while (index != 0);
                     // update sprite data, adjusting to hardware
-                    // 
-  sprite_buffer._0_2_ =
-       sprite_buffer._0_2_ & 0xff00 |
-       (ushort)(byte)((sprite_buffer[0] << 1 | sprite_buffer[0] >> 7) << 1 |
-                     (sprite_buffer[0] << 1) >> 7);
-  c = (sprite_buffer[2] << 1 | sprite_buffer[2] >> 7) << 1 | (sprite_buffer[2] << 1) >> 7;
-  uVar1 = sprite_buffer._2_2_ & 0xff00;
-  sprite_buffer._2_2_ = uVar1 | c;
-  sprite_buffer[4] =
-       (sprite_buffer[4] << 1 | sprite_buffer[4] >> 7) << 1 | (sprite_buffer[4] << 1) >> 7;
-  sprite_buffer[6] =
-       (sprite_buffer[6] << 1 | sprite_buffer[6] >> 7) << 1 | (sprite_buffer[6] << 1) >> 7;
-  sprite_buffer._8_2_ =
-       sprite_buffer._8_2_ & 0xff00 |
-       (ushort)(byte)((sprite_buffer[8] << 1 | sprite_buffer[8] >> 7) << 1 |
-                     (sprite_buffer[8] << 1) >> 7);
-  sprite_buffer[10] =
-       (sprite_buffer[10] << 1 | sprite_buffer[10] >> 7) << 1 | (sprite_buffer[10] << 1) >> 7;
+  sprite_positions_for_spriteram2[0] =
+       sprite_positions_for_spriteram2[0] & 0xff00 |
+       (ushort)(byte)((sprite_positions_for_spriteram2[0].x << 1 |
+                      sprite_positions_for_spriteram2[0].x >> 7) << 1 |
+                     (sprite_positions_for_spriteram2[0].x << 1) >> 7);
+  c = (sprite_positions_for_spriteram2[1].x << 1 | sprite_positions_for_spriteram2[1].x >> 7) << 1 |
+      (sprite_positions_for_spriteram2[1].x << 1) >> 7;
+  uVar1 = sprite_positions_for_spriteram2[1] & 0xff00;
+  sprite_positions_for_spriteram2[1] = uVar1 | c;
+  sprite_positions_for_spriteram2[2].x =
+       (sprite_positions_for_spriteram2[2].x << 1 | sprite_positions_for_spriteram2[2].x >> 7) << 1
+       | (sprite_positions_for_spriteram2[2].x << 1) >> 7;
+  sprite_positions_for_spriteram2[3].x =
+       (sprite_positions_for_spriteram2[3].x << 1 | sprite_positions_for_spriteram2[3].x >> 7) << 1
+       | (sprite_positions_for_spriteram2[3].x << 1) >> 7;
+  sprite_positions_for_spriteram2[4] =
+       sprite_positions_for_spriteram2[4] & 0xff00 |
+       (ushort)(byte)((sprite_positions_for_spriteram2[4].x << 1 |
+                      sprite_positions_for_spriteram2[4].x >> 7) << 1 |
+                     (sprite_positions_for_spriteram2[4].x << 1) >> 7);
+  sprite_positions_for_spriteram2[5].x =
+       (sprite_positions_for_spriteram2[5].x << 1 | sprite_positions_for_spriteram2[5].x >> 7) << 1
+       | (sprite_positions_for_spriteram2[5].x << 1) >> 7;
   if (killed_ghost_animation_state == 1) {
-    uVar7 = (ushort)(byte)(number_of_ghost_killed_but_no_collision_for_yet * '\x02');
-    sprite_buffer._2_2_ =
+    uVar6 = (ushort)(byte)(number_of_ghost_killed_but_no_collision_for_yet * '\x02');
+    sprite_positions_for_spriteram2[1] =
          *(ushort *)
-          (&start_of_sprite_buffer__sprite_data_that_goes_to_the_hardware_sprite_system + uVar7);
-    sprite_number_and_color_for_spriteram._2_2_ = *(undefined2 *)(sprite_buffer + uVar7 + 0xe);
-    (&start_of_sprite_buffer__sprite_data_that_goes_to_the_hardware_sprite_system)[uVar7] = c;
-    (&_next_ghost_sprite)[uVar7] = (char)(uVar1 >> 8);
-    sprite_buffer[uVar7 + 0xe] = (byte)uVar2;
-    sprite_buffer[uVar7 + 0xf] = (byte)((ushort)uVar2 >> 8);
+          (&start_of_sprite_buffer__sprite_data_that_goes_to_the_hardware_sprite_system.x + uVar6);
+    sprite_number_and_color_for_spriteram[1] =
+         *(undefined2 *)(&sprite_positions_for_spriteram2[7].x + uVar6);
+    (&start_of_sprite_buffer__sprite_data_that_goes_to_the_hardware_sprite_system.x)[uVar6] = c;
+    (&start_of_sprite_buffer__sprite_data_that_goes_to_the_hardware_sprite_system.y)[uVar6] =
+         (byte)(uVar1 >> 8);
+    (&sprite_positions_for_spriteram2[7].x)[uVar6] = (byte)uVar2;
+    (&sprite_positions_for_spriteram2[7].y)[uVar6] = (byte)((ushort)uVar2 >> 8);
   }
-  uVar2 = sprite_number_and_color_for_spriteram._0_2_;
-  uVar1 = sprite_buffer._0_2_;
+  uVar2 = sprite_number_and_color_for_spriteram[0];
+  uVar1 = sprite_positions_for_spriteram2[0];
   if (power_pill_effect != false) {
                     // power pill active
-                    // 
-    sprite_buffer._0_2_ = sprite_buffer._8_2_;
-    sprite_number_and_color_for_spriteram._0_2_ = sprite_number_and_color_for_spriteram._8_2_;
-    sprite_buffer._8_2_ = uVar1;
-    sprite_number_and_color_for_spriteram._8_2_ = uVar2;
+    sprite_positions_for_spriteram2[0] = sprite_positions_for_spriteram2[4];
+    sprite_number_and_color_for_spriteram[0] = sprite_number_and_color_for_spriteram[4];
+    sprite_positions_for_spriteram2[4] = uVar1;
+    sprite_number_and_color_for_spriteram[4] = uVar2;
   }
-  pbVar6 = sprite_buffer;
-  s = hardware_floating_sprite_ram_config;
-  sVar3 = 0xc;
+  pfVar5 = sprite_positions_for_spriteram2;
+  phVar8 = hardware_floating_sprite_ram_config;
+  index = 12;
   do {
                     // green eyed ghost bug encountered here
                     // 4FF2,3 -
@@ -1475,22 +1509,21 @@ void interrupt_vector(void)
                     // 4FF6,7 - blue ghost (8x,11)
                     // 4FF8,9 - orange ghost (8x,11)
                     // 
-    *(byte *)s = *pbVar6;
-    s = (hardware_floating_sprite_t *)&s->color;
-    pbVar6 = pbVar6 + 1;
-    sVar3 = sVar3 + -1;
-  } while (sVar3 != 0);
-  pbVar6 = sprite_number_and_color_for_spriteram;
-  pfVar8 = hardware_floating_sprite_ram_coords;
-  sVar3 = 0xc;
+    *(byte *)phVar8 = pfVar5->x;
+    phVar8 = (hardware_floating_sprite_t *)&phVar8->color;
+    pfVar5 = (floating_sprite_coord_t *)&pfVar5->y;
+    index = index + -1;
+  } while (index != 0);
+  pfVar9 = sprite_number_and_color_for_spriteram;
+  pfVar5 = hardware_floating_sprite_ram_coords;
+  index = 12;
   do {
-    pfVar8->x = *pbVar6;
-    pfVar8 = (floating_sprite_coord_t *)&pfVar8->y;
-    pbVar6 = pbVar6 + 1;
-    sVar3 = sVar3 + -1;
-  } while (sVar3 != 0);
+    pfVar5->x = pfVar9->x;
+    pfVar5 = (floating_sprite_coord_t *)&pfVar5->y;
+    pfVar9 = (floating_sprite_coord_t *)&pfVar9->y;
+    index = index + -1;
+  } while (index != 0);
                     // Core game loop
-                    // 
   update_timers_and_random_number();
   execute_TIMED_task();
   change_game_mode();
@@ -1527,84 +1560,94 @@ void interrupt_vector(void)
                     // )) {
     disableMaskableInterrupts();
     piVar10 = &hardware_IN0;
-    cVar4 = '\b';
+    cVar3 = '\b';
     do {
       *piVar10 = (in0_t)0x0;
       piVar10 = (in0_t *)((ushort)piVar10 & 0xff00 | (ushort)(byte)((char)piVar10 + 1));
-      cVar4 = cVar4 + -1;
-    } while (cVar4 != '\0');
-    pbVar6 = hardware_video_ram;
-    cVar4 = '\x04';
+      c = 0;
+      cVar3 = cVar3 + -1;
+    } while (cVar3 != '\0');
+    s = hardware_video_ram;
+    cVar3 = '\x04';
     do {
+      write_volatile_1(hardware_DSW2_watchdog,c);
+      write_volatile_1(hardware_coin_counter,c);
+      c = 0x40;
       do {
-        *pbVar6 = 0x40;
-        c = (char)pbVar6 + 1;
-        uVar1 = (ushort)pbVar6 & 0xff00;
-        pbVar6 = (byte *)(uVar1 | c);
-      } while (c != 0);
-      pbVar6 = (byte *)((ushort)(byte)((char)(uVar1 >> 8) + 1) << 8);
-      cVar4 = cVar4 + -1;
-    } while (cVar4 != '\0');
-    cVar4 = '\x04';
+        *s = 0x40;
+        n = (char)s + 1;
+        uVar1 = (ushort)s & 0xff00;
+        s = (byte *)(uVar1 | n);
+      } while (n != 0);
+      s = (byte *)((ushort)(byte)((char)(uVar1 >> 8) + 1) << 8);
+      cVar3 = cVar3 + -1;
+    } while (cVar3 != '\0');
+    cVar3 = '\x04';
     do {
+      write_volatile_1(hardware_DSW2_watchdog,c);
+      write_volatile_1(hardware_coin_counter,0);
+      c = 0xf;
       do {
-        *pbVar6 = 0xf;
-        c = (char)pbVar6 + 1;
-        uVar1 = (ushort)pbVar6 & 0xff00;
-        pbVar6 = (byte *)(uVar1 | c);
-      } while (c != 0);
-      pbVar6 = (byte *)((ushort)(byte)((char)(uVar1 >> 8) + 1) << 8);
-      cVar4 = cVar4 + -1;
-    } while (cVar4 != '\0');
+        *s = 0xf;
+        n = (char)s + 1;
+        uVar1 = (ushort)s & 0xff00;
+        s = (byte *)(uVar1 | n);
+      } while (n != 0);
+      s = (byte *)((ushort)(byte)((char)(uVar1 >> 8) + 1) << 8);
+      cVar3 = cVar3 + -1;
+    } while (cVar3 != '\0');
     setInterruptMode(1);
-    hardware_coin_counter = 0;
+    write_volatile_1(hardware_coin_counter,0);
     hardware_IN0 = (in0_t)0x1;
     enableMaskableInterrupts();
     halt();
-    hardware_DSW2_watchdog = 1;
+    write_volatile_1(hardware_DSW2_watchdog,1);
     c = 0;
-    ARRAY_ram_4f5c._98_2_ = (undefined *)0x2359;
+    ARRAY_ram_4f5c._98_2_ = 0x2359;
     memset((byte *)&hardware_IN0,0,8);
-    s = &start_of_sprites_address;
     n = 0xbe;
-    ARRAY_ram_4f5c._98_2_ = (undefined *)0x235f;
-    memset((byte *)&start_of_sprites_address,c,0xbe);
-    ARRAY_ram_4f5c._98_2_ = (undefined *)0x2360;
-    memset((byte *)s,c,n);
-    ARRAY_ram_4f5c._98_2_ = (undefined *)0x2361;
-    memset((byte *)s,c,n);
-    ARRAY_ram_4f5c._98_2_ = (undefined *)0x2362;
-    memset((byte *)s,c,n);
-    ARRAY_ram_4f5c._98_2_ = (undefined *)0x2368;
+    ARRAY_ram_4f5c._98_2_ = 0x235f;
+    s = (byte *)memset((byte *)&start_of_sprites_address,c,0xbe);
+    ARRAY_ram_4f5c._98_2_ = 0x2360;
+    s = (byte *)memset(s,c,n);
+    ARRAY_ram_4f5c._98_2_ = 0x2361;
+    s = (byte *)memset(s,c,n);
+    ARRAY_ram_4f5c._98_2_ = 0x2362;
+    memset(s,c,n);
+    ARRAY_ram_4f5c._98_2_ = 0x2368;
     memset((byte *)&hardware_IN1,c,0x40);
-    ARRAY_ram_4f5c._98_2_ = (undefined *)0x236e;
-    hardware_DSW2_watchdog = c;
+    write_volatile_1(hardware_DSW2_watchdog,c);
+    ARRAY_ram_4f5c._98_2_ = 0x236e;
     T06_clears_color_RAM();
-    ARRAY_ram_4f5c._98_2_ = (undefined *)0x2376;
-    hardware_DSW2_watchdog = c;
+    write_volatile_1(hardware_DSW2_watchdog,c);
+    ARRAY_ram_4f5c._98_2_ = 0x2376;
     T00_clear_whole_screen_or_maze(0);
-    p_task_list_next_free = task_list;
-    p_task_list_begin = task_list;
-    ARRAY_ram_4f5c._98_2_ = (undefined *)0x2387;
-    hardware_DSW2_watchdog = c;
-    memset((byte *)task_list,0xff,0x40);
+    write_volatile_1(hardware_DSW2_watchdog,c);
+    p_task_list_next_free = tasks_to_execute_outside_of_irq;
+    p_task_list_begin = tasks_to_execute_outside_of_irq;
+    ARRAY_ram_4f5c._98_2_ = 0x2387;
+    memset((byte *)tasks_to_execute_outside_of_irq,0xff,0x40);
     hardware_IN0 = (in0_t)0x1;
     enableMaskableInterrupts();
+    s = _STACK_END;
     do {
-      index = p_task_list_begin->value;
-    } while ((short)((ushort)index << 8) < 0);
-    p_task_list_begin->value = ~clear_whole_screen_or_maze;
-    uVar1 = (ushort)p_task_list_begin & 0xff00;
-    *(undefined *)(uVar1 | (byte)((char)p_task_list_begin + 1)) = 0xff;
-    c = (char)p_task_list_begin + 2;
-    p_task_list_begin = (task_core_t *)(uVar1 | c);
-    if (c == 0) {
-      p_task_list_begin = (task_core_t *)CONCAT11((char)(uVar1 >> 8),0xc0);
-    }
-    ARRAY_ram_4f5c._98_2_ = &execute_CORE_task;
-    ARRAY_ram_4f5c._96_2_ = core_fn_table;
-    jump_table((undefined *)core_fn_table,index);
-    return;
+      do {
+        index_00 = p_task_list_begin->value;
+      } while ((short)((ushort)index_00 << 8) < 0);
+      p_task_list_begin->value = ~clear_whole_screen_or_maze;
+      uVar1 = (ushort)p_task_list_begin & 0xff00;
+      *(undefined *)(uVar1 | (byte)((char)p_task_list_begin + 1)) = 0xff;
+      c = (char)p_task_list_begin + 2;
+      p_task_list_begin = (task_core_t *)(uVar1 | c);
+      if (c == 0) {
+        p_task_list_begin = (task_core_t *)CONCAT11((char)(uVar1 >> 8),0xc0);
+      }
+      *(undefined2 *)(s + -2) = 0x238d;
+                    // WARNING: Return address prevents inlining here
+      *(undefined2 *)(s + -4) = 0x23a8;
+      jump_table_fn(*(undefined **)(s + -4),index_00);
+      s = s + -2;
+    } while( true );
   }
   enableMaskableInterrupts();
   hardware_IN0 = (in0_t)0x1;
@@ -1627,8 +1670,8 @@ void update_timers_and_random_number(void)
   byte *pbVar5;
   
   sound_counter = sound_counter + 1;
-  pbVar5 = &__timer_or_random_number1;
-  __timer_or_random_number1 = __timer_or_random_number1 - 1;
+  pbVar5 = &sound_counter_decrement;
+  sound_counter_decrement = sound_counter_decrement - 1;
   pbVar4 = BYTE_ARRAY_ram_0219;
   bVar2 = 1;
   cVar3 = '\x04';
@@ -1664,28 +1707,34 @@ void update_timers_and_random_number(void)
 void execute_TIMED_task(void)
 
 {
-  byte bVar1;
-  byte bVar2;
-  char cVar3;
-  task_timed_t *ptVar4;
+  byte index;
+  ushort uVar1;
+  task_timed_t *ptVar2;
   
-  bVar1 = task_timer;
-  ptVar4 = timed_task_table;
-  cVar3 = '\x10';
+  ptVar2 = scheduled_tasks_list_to_execute_inside_of_irq;
+  uVar1 = CONCAT11(0x10,task_timer);
   do {
-    bVar2 = *(byte *)ptVar4;
-    if ((bVar2 != 0) && ((byte)((bVar2 >> 7) << 1 | ((bVar2 & 0xc0) << 1) >> 7) < bVar1)) {
-      *(byte *)ptVar4 = *(byte *)ptVar4 - 1;
-      if ((*(byte *)ptVar4 & 0x3f) == 0) {
-        *(byte *)ptVar4 = 0;
-        jump_table((undefined *)timed_task_fn_table,
-                   *(byte *)((ushort)ptVar4 & 0xff00 | (ushort)(byte)((char)ptVar4 + 1)));
-        return;
+    index = *(byte *)ptVar2;
+    if ((index != 0) && ((byte)((index >> 7) << 1 | ((index & 0xc0) << 1) >> 7) < (byte)uVar1)) {
+      *(byte *)ptVar2 = *(byte *)ptVar2 - 1;
+      if ((*(byte *)ptVar2 & 0x3f) == 0) {
+        *(byte *)ptVar2 = 0;
+        *(ushort *)((undefined *)register0x44 + -2) = uVar1;
+        *(task_timed_t **)((undefined *)register0x44 + -4) = ptVar2;
+        index = *(byte *)((ushort)ptVar2 & 0xff00 | (ushort)(byte)((char)ptVar2 + 1));
+        *(undefined2 *)((undefined *)register0x44 + -6) = 0x25b;
+                    // WARNING: Return address prevents inlining here
+        *(undefined2 *)((undefined *)register0x44 + -8) = 0x247;
+        jump_table_fn(*(undefined **)((undefined *)register0x44 + -8),index);
+        ptVar2 = *(task_timed_t **)((undefined *)register0x44 + -6);
+        uVar1 = *(ushort *)((undefined *)register0x44 + -4);
+        register0x44 = (BADSPACEBASE *)((undefined *)register0x44 + -2);
       }
     }
-    ptVar4 = (task_timed_t *)((ushort)ptVar4 & 0xff00 | (ushort)(byte)((char)ptVar4 + 3));
-    cVar3 = cVar3 + -1;
-  } while (cVar3 != '\0');
+    ptVar2 = (task_timed_t *)((ushort)ptVar2 & 0xff00 | (ushort)(byte)((char)ptVar2 + 3));
+    index = (char)(uVar1 >> 8) - 1;
+    uVar1 = uVar1 & 0xff | (ushort)index << 8;
+  } while (index != 0);
   return;
 }
 
@@ -1694,9 +1743,10 @@ void execute_TIMED_task(void)
 void TT06_clear_ready_message(char *param_1)
 
 {
+                    // WARNING: Return address prevents inlining here
                     // timed task #06 - clears ready message
                     // 
-  insert_task((word *)&task_core_t_ram_0264);
+  insert_task(&clear_ready_message);
   return;
 }
 
@@ -1747,11 +1797,11 @@ void debounce_coin_input__add_credits(void)
   }
   bVar1 = counter__coin;
   if (counter_coin_timeout == 0) {
-    hardware_coin_counter = 1;
+    write_volatile_1(hardware_coin_counter,1);
     coints_to_credits_routine();
   }
   if (counter_coin_timeout == 8) {
-    hardware_coin_counter = 0;
+    write_volatile_1(hardware_coin_counter,0);
   }
   if ((byte)(counter_coin_timeout - 0xf) != 0) {
     counter_coin_timeout = counter_coin_timeout + 1;
@@ -1902,10 +1952,10 @@ void blink_coin_lights(void)
       hardware_start_lamp_2_players_leds = hardware_start_lamp_1_player_leds;
     }
   }
-  pbVar3 = hardware_video_ram + 0x3d8;
-  pbVar4 = hardware_video_ram + 0x3c5;
+  pbVar3 = sprites_related_stuff2 + 0x18;
+  pbVar4 = sprites_related_stuff2 + 5;
   if ((game_mode != PLAYING) && (subroutine_COIN_INSERTED_state < 2)) {
-    draw_1UP(hardware_video_ram + 0x3d8);
+    draw_1UP(sprites_related_stuff2 + 0x18);
     draw_2UP(pbVar4);
     return;
   }
@@ -1915,7 +1965,7 @@ void blink_coin_lights(void)
     bVar1 = (counter__started_after_insert_coin & 0x10) == 0;
     bVar2 = bVar1 << 6 | 0x10;
     if (bVar1) {
-      draw_1UP(hardware_video_ram + 0x3d8);
+      draw_1UP(sprites_related_stuff2 + 0x18);
     }
     if ((bVar2 >> 6 & 1) == 0) {
       clear_1UP(pbVar3);
@@ -1925,7 +1975,7 @@ void blink_coin_lights(void)
     bVar1 = (counter__started_after_insert_coin & 0x10) == 0;
     bVar2 = bVar1 << 6 | 0x10;
     if (bVar1) {
-      draw_2UP(hardware_video_ram + 0x3c5);
+      draw_2UP(sprites_related_stuff2 + 5);
     }
     if ((bVar2 >> 6 & 1) == 0) {
       clear_2UP(pbVar4);
@@ -2014,7 +2064,8 @@ void check_for_double_size_pacman(void)
 void change_game_mode(void)
 
 {
-  jump_table((undefined *)change_game_mode_fn_table,game_mode);
+                    // WARNING: Return address prevents inlining here
+  jump_table_fn((undefined *)change_game_mode_fn_table,game_mode);
   return;
 }
 
@@ -2025,7 +2076,8 @@ void change_game_mode(void)
 void execute_INIT_task_state(void)
 
 {
-  jump_table((undefined *)execute_INIT_task_state_fn_table,subroutine_INIT_state);
+                    // WARNING: Return address prevents inlining here
+  jump_table_fn((undefined *)execute_INIT_task_state_fn_table,subroutine_INIT_state);
   return;
 }
 
@@ -2038,7 +2090,24 @@ void execute_INIT_task_state(void)
 void I00_add_first_tasks(void)
 
 {
-  insert_task((word *)&task_3dd);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_clear_whole_screen);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_clear_color_RAM);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_select_maze_color);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_setup_config_from_dip_switch);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_print_highscore);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_reset_sprites_to_default);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_clear_fruit_and_pacman_position);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_set_game_to_demo_mode);
+  subroutine_INIT_state = subroutine_INIT_state + 1;
+  hardware_sound_enable = true;
   return;
 }
 
@@ -2074,7 +2143,15 @@ void execute_DEMO_task_state(undefined param_1)
 void demo_mode_prepare_screen(undefined2 param_1)
 
 {
-  insert_task((word *)&task_core_t_ram_0460);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_clear_whole_screen_or_maze);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_select_maze_color);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_reset_sprites_to_default_values);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_clear_fruit_and_pacman_position);
+  add_task_to_print_text(MS_PACMAN);
   return;
 }
 
@@ -2086,7 +2163,7 @@ void demo_mode_prepare_screen(undefined2 param_1)
 void pacman_draw_red_ghost(void)
 
 {
-  pacman_only_used_during_attract_mode(RED_GHOST,hardware_video_ram + 0x304);
+  pacman_only_used_during_attract_mode(0x1,hardware_screen_maze_area + 0x2c4);
   add_task_to_print_text(MS_PACMAN);
   return;
 }
@@ -2096,7 +2173,7 @@ void pacman_draw_red_ghost(void)
 void pacman_draw__shadow(undefined param_1)
 
 {
-  pacman_used_in_demo_mode('\x14',param_1);
+  pacman_used_in_demo_mode('\x14');
   return;
 }
 
@@ -2105,7 +2182,7 @@ void pacman_draw__shadow(undefined param_1)
 void pacman_draw_blinky(undefined param_1)
 
 {
-  pacman_used_in_demo_mode('\r',param_1);
+  pacman_used_in_demo_mode('\r');
   return;
 }
 
@@ -2114,7 +2191,7 @@ void pacman_draw_blinky(undefined param_1)
 void pacman_draw_pink_ghost(void)
 
 {
-  pacman_only_used_during_attract_mode(3,hardware_video_ram + 0x307);
+  pacman_only_used_during_attract_mode(3,hardware_screen_maze_area + 0x2c7);
   add_task_to_print_text(MS_PACMAN);
   return;
 }
@@ -2124,7 +2201,7 @@ void pacman_draw_pink_ghost(void)
 void pacman_draw__speedy(undefined param_1)
 
 {
-  pacman_used_in_demo_mode('\x16',param_1);
+  pacman_used_in_demo_mode('\x16');
   return;
 }
 
@@ -2133,7 +2210,7 @@ void pacman_draw__speedy(undefined param_1)
 void pacman_draw_pinky(undefined param_1)
 
 {
-  pacman_used_in_demo_mode('\x0f',param_1);
+  pacman_used_in_demo_mode('\x0f');
   return;
 }
 
@@ -2142,7 +2219,7 @@ void pacman_draw_pinky(undefined param_1)
 void pacman_draw_blue_ghost(void)
 
 {
-  pacman_only_used_during_attract_mode(5,hardware_video_ram + 0x30a);
+  pacman_only_used_during_attract_mode(5,hardware_screen_maze_area + 0x2ca);
   add_task_to_print_text(MS_PACMAN);
   return;
 }
@@ -2152,7 +2229,7 @@ void pacman_draw_blue_ghost(void)
 void pacman_draw__bashful(undefined param_1)
 
 {
-  pacman_used_in_demo_mode('3',param_1);
+  pacman_used_in_demo_mode('3');
   return;
 }
 
@@ -2161,7 +2238,7 @@ void pacman_draw__bashful(undefined param_1)
 void pacman_draw_inky(undefined param_1)
 
 {
-  pacman_used_in_demo_mode('/',param_1);
+  pacman_used_in_demo_mode('/');
   return;
 }
 
@@ -2170,7 +2247,7 @@ void pacman_draw_inky(undefined param_1)
 void pacman_draw_orange_ghost(void)
 
 {
-  pacman_only_used_during_attract_mode(7,hardware_video_ram + 0x30d);
+  pacman_only_used_during_attract_mode(7,hardware_screen_maze_area + 0x2cd);
   add_task_to_print_text(MS_PACMAN);
   return;
 }
@@ -2180,7 +2257,7 @@ void pacman_draw_orange_ghost(void)
 void pacman_draw__pokey(undefined param_1)
 
 {
-  pacman_used_in_demo_mode('5',param_1);
+  pacman_used_in_demo_mode('5');
   return;
 }
 
@@ -2189,19 +2266,12 @@ void pacman_draw__pokey(undefined param_1)
 void pacman_draw_clyde(undefined2 param_1)
 
 {
-  byte arg;
-  undefined uVar1;
-  undefined uVar2;
-  
-  uVar2 = (undefined)((ushort)param_1 >> 8);
                     // pac-man only ???
                     // arrive here from #04D5
                     // 
-  arg = ghost_names_mode + 0x31;
-  uVar1 = 0x1c;
-  add_to_task_list(0x1c,arg);
-  add_timed_task((task_timed_t *)(add_task_to_print_text + 6));
-  *(byte *)CONCAT11(uVar1,uVar2) = arg;
+  add_to_task_list(draw_text_or_graphics,ghost_names_mode + 0x31);
+                    // WARNING: Return address prevents inlining here
+  add_timed_task(&task_increase_subroutine_DEMO_state);
   subroutine_DEMO_state = subroutine_DEMO_state + 1;
   return;
 }
@@ -2211,7 +2281,9 @@ void pacman_draw_clyde(undefined2 param_1)
 void pacman_draw_10pts(void)
 
 {
-  insert_task((word *)&task_core_t_ram_04d9);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_draw_text_or_graphics_ten_points);
+  add_task_to_print_text(FIVTY_POINTS);
   return;
 }
 
@@ -2221,12 +2293,33 @@ void pacman_get_demo_ready(char *param_1,undefined2 param_2)
 
 {
   undefined uVar1;
+  char cVar2;
+  byte *pbVar3;
   
   uVar1 = C_MIDWAY_MFG_CO;
   add_task_to_print_text(C_MIDWAY_MFG_CO);
   P00_reset_game_data(uVar1);
   *param_1 = *param_1 + -1;
-  insert_task((word *)&task_core_t_ram_04ea);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_clear_full_data_game);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_reset_ghost_home_counter);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_setup_difficulty);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_reset_sprites_to_default_values);
+  real_number_of_lives = 1;
+  number_of_players = 0;
+  number_of_lives_displayed = 0;
+  hardware_screen_maze_area[26][26] = 0x14;
+  cVar2 = '\x1c';
+  pbVar3 = hardware_screen_maze_area;
+  do {
+    pbVar3[0x11] = 0xfc;
+    pbVar3[0x13] = 0xfc;
+    pbVar3 = pbVar3 + 0x20;
+    cVar2 = cVar2 + -1;
+  } while (cVar2 != '\0');
   return;
 }
 
@@ -2236,14 +2329,14 @@ void pacman_3rd_intermission_end(void)
 
 {
   char cVar1;
-  short sVar2;
+  byte *pbVar2;
   
   cVar1 = '\x1c';
-  sVar2 = 0x4040;
+  pbVar2 = hardware_screen_maze_area;
   do {
-    *(undefined *)(sVar2 + 0x11) = 0xfc;
-    *(undefined *)(sVar2 + 0x13) = 0xfc;
-    sVar2 = sVar2 + 0x20;
+    pbVar2[0x11] = 0xfc;
+    pbVar2[0x13] = 0xfc;
+    pbVar2 = pbVar2 + 0x20;
     cVar1 = cVar1 + -1;
   } while (cVar1 != '\0');
   return;
@@ -2256,7 +2349,7 @@ void pacman_draw_start_and_run_demo(void)
 {
                     // called during attract mode, pac-man only, not ms. pac
                     // 
-  if (pacman_position.x == 0x21) {
+  if (pacman_position_tile_position.x == 0x21) {
     red_ghost_substate_if_alive = GOING_FOR_PACMAN;
     TT02_increase_subroutine_DEMO_state();
     return;
@@ -2383,17 +2476,12 @@ void pacman_end_demo_and_return(void)
 // called from #046D and other places.  C is preloaded with the text code to display
 // 
 
-void add_task_to_print_text(byte text)
+void add_task_to_print_text(text_e text)
 
 {
-  undefined in_A;
-  undefined uVar1;
-  undefined in_D;
-  
-  uVar1 = draw_text_or_graphics;
   add_to_task_list(draw_text_or_graphics,text);
-  add_timed_task((task_timed_t *)0x58b);
-  *(undefined *)CONCAT11(uVar1,in_D) = in_A;
+                    // WARNING: Return address prevents inlining here
+  add_timed_task(&task_increase_subroutine_DEMO_state);
   subroutine_DEMO_state = subroutine_DEMO_state + 1;
   return;
 }
@@ -2420,17 +2508,12 @@ void TT02_increase_subroutine_DEMO_state(void)
 // called from several places after C has been preloaded with ghost name code
 // 
 
-void pacman_used_in_demo_mode(char param_1,undefined param_2)
+void pacman_used_in_demo_mode(char param_1)
 
 {
-  byte arg;
-  byte bVar1;
-  
-  arg = ghost_names_mode + param_1;
-  bVar1 = arg;
-  add_to_task_list(0x1c,arg);
-  add_timed_task((task_timed_t *)0x59e);
-  *(byte *)CONCAT11(param_2,bVar1) = arg;
+  add_to_task_list(draw_text_or_graphics,ghost_names_mode + param_1);
+                    // WARNING: Return address prevents inlining here
+  add_timed_task(&task_increase_subroutine_DEMO_state);
   TT02_increase_subroutine_DEMO_state();
   return;
 }
@@ -2501,15 +2584,10 @@ byte execute_COIN_INSERTED_task_state(void)
 
 {
   byte bVar1;
-  undefined **ppuVar2;
   
-  ppuVar2 = coin_inserted_task_fn_table;
-  bVar1 = dereference_pointer_to_byte
-                    ((byte *)coin_inserted_task_fn_table,subroutine_COIN_INSERTED_state * '\x02');
-                    // WARNING: Could not recover jumptable at 0x0027. Too many branches
-                    // WARNING: Treating indirect jump as call
-  bVar1 = (*(code *)CONCAT11(*(undefined *)((short)ppuVar2 + 1),bVar1))
-                    ((undefined *)((short)ppuVar2 + 1));
+  bVar1 = subroutine_COIN_INSERTED_state;
+                    // WARNING: Return address prevents inlining here
+  jump_table_fn((undefined *)coin_inserted_task_fn_table,subroutine_COIN_INSERTED_state);
   return bVar1;
 }
 
@@ -2520,8 +2598,28 @@ byte C00_init_screen(undefined param_1)
 {
   byte bVar1;
   
-  bVar1 = T1D_draw_credit_qty(param_1);
-  insert_task((word *)&task_core_t_ram_05f7);
+  T1D_draw_credit_qty(param_1);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_clear_whole_screen_or_maze);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_select_maze_color);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_draw_text_or_graphics);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_draw_text_or_graphics);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_clear_fruit_and_pacman_values);
+  subroutine_COIN_INSERTED_state = subroutine_COIN_INSERTED_state + 1;
+  LED_state = 1;
+  if (bonus_life == 0xff) {
+    LED_state = 1;
+    return 0xff;
+  }
+  bVar1 = bonus_life;
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_draw_text_or_graphics);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_draw_extra_life_points);
   return bVar1;
 }
 
@@ -2718,7 +2816,32 @@ void C01_draw_credits_qty_and_check_1P_OR_2P_button_for_start(undefined param_1)
 void C02_init_screen_ready_for_play(void)
 
 {
-  insert_task((word *)&task_core_t_ram_0675);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_clear_whole_screen_or_maze);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_select_maze_color);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_draw_maze);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_clears_pills_and_power_pills);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_draw_pellets);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_draw_text_or_graphics);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_draw_text_or_graphics);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_print_high_score_text_then_players_score);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_draw_fruits_right_screen);
+  current_level = 0;
+  real_number_of_lives = number_of_lives;
+  number_of_lives_displayed = number_of_lives;
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_draw_remaining_lives_bottom_screen);
+                    // WARNING: Return address prevents inlining here
+  add_timed_task(&task_increase_subroutine_COIN_INSETED_state);
+  subroutine_COIN_INSERTED_state = subroutine_COIN_INSERTED_state + 1;
   return;
 }
 
@@ -2757,7 +2880,8 @@ void C04_draw_remaining_lives_and_reset_states(byte param_1,undefined *param_2)
 void execute_PLAYING_task_state(void)
 
 {
-  jump_table((undefined *)playing_task_fn_table,subroutine_PLAYING_state);
+                    // WARNING: Return address prevents inlining here
+  jump_table_fn((undefined *)playing_task_fn_table,subroutine_PLAYING_state);
   return;
 }
 
@@ -2928,7 +3052,24 @@ void P01_init_screen_then_goto_P09(void)
     subroutine_PLAYING_state = 9;
     return;
   }
-  insert_task((word *)&task_core_t_ram_08a6);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_clear_full_data_game);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_draw_text_or_graphics);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_reset_sprites_to_default_values);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_reset_ghost_home_counter);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_setup_difficulty);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_draw_remaining_lives_bottom_screen);
+                    // WARNING: Return address prevents inlining here
+  add_timed_task(&task_increase_subroutine_PLAYING_state);
+                    // WARNING: Return address prevents inlining here
+  add_timed_task(&task_clear_ready_message);
+  hardware_flipscreen = (bool)(current_player_number & cocktail_mode);
+  TT00_increase_subroutine_PLAYING_state();
   return;
 }
 
@@ -2941,7 +3082,8 @@ void P03_check_rack_test(void)
 {
   if (((byte)hardware_IN0 & 0x10) == 0) {
     subroutine_PLAYING_state = 0xe;
-    insert_task((word *)&task_core_t_ram_08db);
+                    // WARNING: Return address prevents inlining here
+    insert_task(&task_clears_sprites);
     return;
   }
                     //  routine to determine the number of pellets which must be eaten
@@ -2980,7 +3122,10 @@ void P04_player_is_died_game_over(void)
   if (((real_number_of_lives == 0) && (number_of_players != 0)) && (DAT_ram_4e42 != '\0')) {
     subroutine_PLAYING_state = subroutine_PLAYING_state + 1;
     add_to_task_list(draw_text_or_graphics,current_player_number + 3);
-    insert_task((word *)&task_core_t_ram_0937);
+                    // WARNING: Return address prevents inlining here
+    insert_task(&task_draw_text_or_graphics);
+                    // WARNING: Return address prevents inlining here
+    add_timed_task(&task_increase_subroutine_PLAYING_state);
     return;
   }
   subroutine_PLAYING_state = subroutine_PLAYING_state + GHOST_WAIT_FOR_START;
@@ -2999,13 +3144,16 @@ void P06_switch_player(undefined param_1)
                     // for never-ending pac goodness
                     // 
       T1D_draw_credit_qty(param_1);
-      insert_task((word *)&task_core_t_ram_0956);
+                    // WARNING: Return address prevents inlining here
+      insert_task(&task_draw_text_or_graphics);
+                    // WARNING: Return address prevents inlining here
+      add_timed_task(&task_increase_subroutine_PLAYING_state);
+      subroutine_PLAYING_state = subroutine_PLAYING_state + 1;
       return;
     }
   }
   else {
                     // arrive here from #094a when there 2 players, when a player dies
-                    // 
     __maybe_player_change_backup_current_player_game_settings();
     current_player_number = current_player_number ^ 1;
   }
@@ -3028,7 +3176,7 @@ void P08_end_of_demo(void)
   subroutine_PLAYING_state = 0;
   current_player_number = 0;
   number_of_players = 0;
-  hardware_flipscreen = 0;
+  hardware_flipscreen = false;
   return;
 }
 
@@ -3041,7 +3189,42 @@ void P08_end_of_demo(void)
 void P09_prepare_screen_level(void)
 
 {
-  insert_task((word *)&task_core_t_ram_0989);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_clear_whole_screen_or_maze);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_select_maze_color);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_draw_maze);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_clear_full_data_game);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_clears_sprites);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_draw_pellets);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_reset_sprites_to_default_values);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_reset_ghost_home_counter);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_setup_difficulty);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_draw_remaining_lives_bottom_screen);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_draw_text_or_graphics);
+  if (game_mode != PLAYING) {
+                    // WARNING: Return address prevents inlining here
+    insert_task(&task_draw_ext_or_graphics);
+                    // WARNING: Return address prevents inlining here
+    insert_task(&task_draw_draw_credit_qty);
+  }
+                    // WARNING: Return address prevents inlining here
+  add_timed_task(&task_increase_subrouting_PLAYING_state);
+  if (game_mode != DEMO) {
+                    // WARNING: Return address prevents inlining here
+    add_timed_task(&task_clear_ready_message);
+  }
+  hardware_flipscreen = (bool)(current_player_number & cocktail_mode);
+  TT00_increase_subroutine_PLAYING_state();
   return;
 }
 
@@ -3060,14 +3243,16 @@ void P0B_loop_state_P03(void)
 
 
 
+// WARNING: This is an inlined function
 // called from #06C1 when (#4E04 == #0C)
 // arrive here at end of level
 // 
 
-void P0C_end_of_level_clear_sound(void)
+void P0C_end_of_level_clear_sound(task_timed_t *task)
 
 {
-  add_timed_task((task_timed_t *)0x9d9);
+                    // WARNING: Return address prevents inlining here
+  add_timed_task(&task_increase_subroutine_PLAYING_state);
   subroutine_PLAYING_state = subroutine_PLAYING_state + 1;
   channel_2_effect.num = 0;
   channel_3_effect.num = 0;
@@ -3082,7 +3267,8 @@ void P0C_end_of_level_clear_sound(void)
 void P0E_flash_screen_on(void)
 
 {
-  add_to_task_list(1,_flashing);
+  add_to_task_list(select_maze_color,_flashing);
+                    // WARNING: Return address prevents inlining here
   add_timed_task((task_timed_t *)0x9f0);
   clear_all_ghost_from_screen(0);
   subroutine_PLAYING_state = subroutine_PLAYING_state + 1;
@@ -3095,6 +3281,7 @@ void change_maze_color(byte color)
 
 {
   add_to_task_list(select_maze_color,color);
+                    // WARNING: Return address prevents inlining here
   add_timed_task((task_timed_t *)0x9f0);
   clear_all_ghost_from_screen(0);
   subroutine_PLAYING_state = subroutine_PLAYING_state + 1;
@@ -3175,7 +3362,23 @@ void P10_flash_screen_off(void)
 void P1E_end_of_level_after_flash_screen(void)
 
 {
-  insert_task((word *)&task_core_t_ram_0a0f);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_clear_whole_screen_or_maze);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_clears_color_RAM);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_clear_full_data_game);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_clears_sprites);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_reset_sprites_to_default_values);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_reset_ghost_home_counter);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_setup_difficulty);
+                    // WARNING: Return address prevents inlining here
+  add_timed_task(&task_increase_subroutine_PLAYING_state);
+  subroutine_PLAYING_state = subroutine_PLAYING_state + 1;
   return;
 }
 
@@ -3197,7 +3400,8 @@ void P20_end_of_level_clear_sounds_and_run_intermissions(void)
   if (0x13 < current_level) {
     index = 0x14;
   }
-  jump_table((undefined *)next_level_state_lookup_fn_table,index);
+                    // WARNING: Return address prevents inlining here
+  jump_table_fn((undefined *)next_level_state_lookup_fn_table,index);
   return;
 }
 
@@ -3356,20 +3560,20 @@ void handle_ghost_flashing_and_colors_when_power_pills_are_eaten(void)
       }
     }
     if (blue_ghost_blue_flag == false) {
-      if (inky_sprite.color == inky) {
-        inky_sprite.color = inky;
+      if (blue_sprite.color == inky) {
+        blue_sprite.color = inky;
       }
       else {
-        inky_sprite.color = inky;
+        blue_sprite.color = inky;
       }
     }
     else {
       if (counter_while_ghosts_are_blue < 0x100) {
-        if (inky_sprite.color == 0x11) {
-          inky_sprite.color = 0x12;
+        if (blue_sprite.color == 0x11) {
+          blue_sprite.color = 0x12;
         }
         else {
-          inky_sprite.color = 0x11;
+          blue_sprite.color = 0x11;
         }
       }
     }
@@ -3418,7 +3622,7 @@ void pacman_only_set_color_for_dead_ghost(void)
     pink_ghost_sprite.color = color;
   }
   if (blue_ghost_state != ALIVE) {
-    inky_sprite.color = color;
+    blue_sprite.color = color;
   }
   if (orange_ghost_state == ALIVE) {
     return;
@@ -3442,8 +3646,8 @@ byte handle_power_pill_flashes(void)
   counter__to_handle_power_pill_flashes = 0;
   if (subroutine_PLAYING_state == GHOST_MOVE) {
     puVar2 = (ushort *)get_maze_data_from_current_level((byte *)power_pellet_per_map_lookup_table);
-    bVar1 = hardware_color_ram[126];
-    if (hardware_color_ram[126] == *(byte *)(*puVar2 | 0x400)) {
+    bVar1 = BYTE_ARRAY_ARRAY_ram_4440[2][6];
+    if (BYTE_ARRAY_ARRAY_ram_4440[2][6] == *(byte *)(*puVar2 | 0x400)) {
       bVar1 = 0;
     }
     *(byte *)(*puVar2 | 0x400) = bVar1;
@@ -3460,13 +3664,13 @@ byte handle_power_pill_flashes(void)
                     // dies.
                     // in pac-man, a dot may disappear at #4678
                     // 
-  hardware_color_ram[632] = 0x10;
-  if (hardware_color_ram[818] == 0x10) {
-    hardware_color_ram[632] = 0;
+  BYTE_ARRAY_ARRAY_ram_4440[20][8] = 0x10;
+  if (BYTE_ARRAY_ARRAY_ram_4440[26][26] == 0x10) {
+    BYTE_ARRAY_ARRAY_ram_4440[20][8] = 0;
   }
-  hardware_color_ram[818] = hardware_color_ram[632];
+  BYTE_ARRAY_ARRAY_ram_4440[26][26] = BYTE_ARRAY_ARRAY_ram_4440[20][8];
   counter__to_handle_power_pill_flashes = 0;
-  return hardware_color_ram[632];
+  return BYTE_ARRAY_ARRAY_ram_4440[20][8];
 }
 
 
@@ -3808,14 +4012,6 @@ void TT04_clear_fruit_points(void)
 
 
 
-void RET(void)
-
-{
-  return;
-}
-
-
-
 // this is timed task #05, arrive from #0246
 
 void TT05_clear_fruit_position(void)
@@ -3909,7 +4105,8 @@ void state_red_ghost_update(void)
 {
                     // called from #1022
                     // 
-  jump_table((undefined *)state_red_ghost_update_fn_table,red_ghost_state);
+                    // WARNING: Return address prevents inlining here
+  jump_table_fn((undefined *)state_red_ghost_update_fn_table,red_ghost_state);
   return;
 }
 
@@ -3918,7 +4115,8 @@ void state_red_ghost_update(void)
 void state_pink_ghost_update(void)
 
 {
-  jump_table((undefined *)state_pink_ghost_update_fn_table,pink_ghost_state);
+                    // WARNING: Return address prevents inlining here
+  jump_table_fn((undefined *)state_pink_ghost_update_fn_table,pink_ghost_state);
   return;
 }
 
@@ -3929,7 +4127,8 @@ void state_blue_ghost_update(void)
 {
                     // called from #1028
                     // 
-  jump_table((undefined *)state_blue_ghost_fn_table,blue_ghost_state);
+                    // WARNING: Return address prevents inlining here
+  jump_table_fn((undefined *)state_blue_ghost_fn_table,blue_ghost_state);
   return;
 }
 
@@ -3938,7 +4137,8 @@ void state_blue_ghost_update(void)
 void state_orange_ghost_update(void)
 
 {
-  jump_table((undefined *)state_orange_ghost_fn_table,orange_ghost_state);
+                    // WARNING: Return address prevents inlining here
+  jump_table_fn((undefined *)state_orange_ghost_fn_table,orange_ghost_state);
   return;
 }
 
@@ -4195,7 +4395,8 @@ void state_orange_ghost_eyes_in_house(void)
 void ghost_stuff_after_eaten_or(void)
 
 {
-  jump_table((undefined *)ghost_stuff_after_eaten_or_fn_table,killed_ghost_animation_state);
+                    // WARNING: Return address prevents inlining here
+  jump_table_fn((undefined *)ghost_stuff_after_eaten_or_fn_table,killed_ghost_animation_state);
   return;
 }
 
@@ -4218,8 +4419,8 @@ void ghost_stuff0(void)
     *pbVar3 = bVar2;
     (&start_of_sprites_address.color)[(ushort)bVar1] = color_maze_level_14_15_16_17_and_ghosts_door;
     mspac_sprite.color = fruit;
-    add_timed_task((task_timed_t *)0x126f);
-    killed_ghost_animation_state = killed_ghost_animation_state + 1;
+                    // WARNING: Return address prevents inlining here
+    add_timed_task(&task_increase_killed_ghost_animation_state);
     return;
   }
   *pbVar3 = 0x20;
@@ -4247,7 +4448,8 @@ void is_pacman_dead(void)
 {
                     // called from #1017
                     // 
-  jump_table((undefined *)dead_animation_fn_table,pacman_dead_animation_state);
+                    // WARNING: Return address prevents inlining here
+  jump_table_fn((undefined *)dead_animation_fn_table,pacman_dead_animation_state);
   return;
 }
 
@@ -4513,18 +4715,18 @@ void cocktail_mode_update_sprites(void)
   }
                     // yes, handle sprite flips
                     // 
-  red_ghost_coord_xy.y = red_ghost_coord.y + 8;
-  red_ghost_coord_xy.x = ~red_ghost_coord.x + 7;
-  pink_ghost_coord_xy.y = pink_ghost_coord.y + 8;
-  pink_ghost_coord_xy.x = ~pink_ghost_coord.x + 7;
-  blue_ghost_coord_xy.y = blue_ghost_coord.y + 8;
-  blue_ghost_coord_xy.x = ~blue_ghost_coord.x + 8;
-  orange_ghost_coord_xy.y = orange_ghost_coord.y + 8;
-  orange_ghost_coord_xy.x = ~orange_ghost_coord.x + 8;
-  pacman_coord_xy.y = pacman_coord.y + 8;
-  pacman_coord_xy.x = ~pacman_coord.x + 8;
-  fruit_coord_xy.y = fruit_coord.y + 8;
-  fruit_coord_xy.x = ~fruit_coord.x + 8;
+  sprites_coords_xy[0].y = red_ghost_coord.y + 8;
+  sprites_coords_xy[0].x = ~red_ghost_coord.x + 7;
+  sprites_coords_xy[1].y = pink_ghost_coord.y + 8;
+  sprites_coords_xy[1].x = ~pink_ghost_coord.x + 7;
+  sprites_coords_xy[2].y = blue_ghost_coord.y + 8;
+  sprites_coords_xy[2].x = ~blue_ghost_coord.x + 8;
+  sprites_coords_xy[3].y = orange_ghost_coord.y + 8;
+  sprites_coords_xy[3].x = ~orange_ghost_coord.x + 8;
+  sprites_coords_xy[4].y = pacman_coord.y + 8;
+  sprites_coords_xy[4].x = ~pacman_coord.x + 8;
+  sprites_coords_xy[5].y = fruit_coord.y + 8;
+  sprites_coords_xy[5].x = ~fruit_coord.x + 8;
   update_pacman_orientation();
   return;
 }
@@ -4539,64 +4741,101 @@ void no_cocktail_mode_update_sprites(void)
 
 {
   byte bVar1;
-  hardware_floating_sprite_t *phVar2;
+  byte bVar2;
+  char cVar3;
+  undefined **ppuVar4;
+  hardware_floating_sprite_t *phVar5;
+  undefined *puStack2;
   
-  bVar1 = current_player_number & cocktail_mode;
-  if (bVar1 != 0) {
+  bVar2 = current_player_number & cocktail_mode;
+  if (bVar2 != 0) {
     return;
   }
-  phVar2 = &start_of_sprites_address;
-  red_ghost_coord_xy.y = ~red_ghost_coord.y + 9;
-  red_ghost_coord_xy.x = red_ghost_coord.x + 6;
-  pink_ghost_coord_xy.y = ~pink_ghost_coord.y + 9;
-  pink_ghost_coord_xy.x = pink_ghost_coord.x + 6;
-  blue_ghost_coord_xy.y = ~blue_ghost_coord.y + 9;
-  blue_ghost_coord_xy.x = blue_ghost_coord.x + 7;
-  orange_ghost_coord_xy.y = ~orange_ghost_coord.y + 9;
-  orange_ghost_coord_xy.x = orange_ghost_coord.x + 7;
-  pacman_coord_xy.y = ~pacman_coord.y + 9;
-  pacman_coord_xy.x = pacman_coord.x + 7;
-  fruit_coord_xy.y = ~fruit_coord.y + 9;
-  fruit_coord_xy.x = fruit_coord.x + 7;
+  phVar5 = &start_of_sprites_address;
+  sprites_coords_xy[0].y = ~red_ghost_coord.y + 9;
+  sprites_coords_xy[0].x = red_ghost_coord.x + 6;
+  sprites_coords_xy[1].y = ~pink_ghost_coord.y + 9;
+  sprites_coords_xy[1].x = pink_ghost_coord.x + 6;
+  sprites_coords_xy[2].y = ~blue_ghost_coord.y + 9;
+  sprites_coords_xy[2].x = blue_ghost_coord.x + 7;
+  sprites_coords_xy[3].y = ~orange_ghost_coord.y + 9;
+  sprites_coords_xy[3].x = orange_ghost_coord.x + 7;
+  sprites_coords_xy[4].y = ~pacman_coord.y + 9;
+  sprites_coords_xy[4].x = pacman_coord.x + 7;
+  sprites_coords_xy[5].y = ~fruit_coord.y + 9;
+  sprites_coords_xy[5].x = fruit_coord.x + 7;
   if (pacman_dead_animation_state == 0) {
-    if (number_of_ghost_killed_but_no_collision_for_yet == 0) {
-      jump_table((undefined *)orientation_fn_table,pacman_orientation);
-      return;
+    if (number_of_ghost_killed_but_no_collision_for_yet != 0) goto LAB_ram_15b4;
+    ppuVar4 = &puStack2;
+    ppuVar4 = &puStack2;
+    ppuVar4 = &puStack2;
+    ppuVar4 = &puStack2;
+    ppuVar4 = &puStack2;
+    ppuVar4 = &puStack2;
+    puStack2 = &return_address;
+                    // WARNING: Return address prevents inlining here
+    jump_table_fn((undefined *)orientation_fn_table,pacman_orientation);
+    register0x44 = (BADSPACEBASE *)&puStack2;
+    if (bVar2 != 0) {
+      if ((mspac_sprite._0_1_ & 0xc0) == 0) {
+        mspac_sprite._0_1_ = mspac_sprite._0_1_ | 0xc0;
+        register0x44 = (BADSPACEBASE *)ppuVar4;
+      }
+      else {
+        if (pacman_orientation == left) {
+          register0x44 = (BADSPACEBASE *)ppuVar4;
+          if ((mspac_sprite._0_1_ & 0x80) != 0) {
+            mspac_sprite._0_1_ = mspac_sprite._0_1_ ^ 0xc0;
+            register0x44 = (BADSPACEBASE *)ppuVar4;
+          }
+        }
+        else {
+          register0x44 = (BADSPACEBASE *)ppuVar4;
+          if ((pacman_orientation == up) &&
+             (register0x44 = (BADSPACEBASE *)ppuVar4, (mspac_sprite._0_1_ & 0x40) != 0)) {
+            mspac_sprite._0_1_ = mspac_sprite._0_1_ ^ 0xc0;
+            register0x44 = (BADSPACEBASE *)ppuVar4;
+          }
+        }
+      }
     }
   }
-  else {
-    orange_ghost_sprite._0_1_ = counter__change_every_8_frames + 0x1c;
-    if ((red_ghost_state != ALIVE) ||
-       (red_ghost_sprite._0_1_ = orange_ghost_sprite._0_1_, red_ghost_blue_flag == false)) {
-      red_ghost_sprite._0_1_ =
-           red_ghost_orientation * '\x02' + counter__change_every_8_frames + 0x20;
-    }
-    if ((pink_ghost_state != ALIVE) ||
-       (pink_ghost_sprite._0_1_ = orange_ghost_sprite._0_1_, pink_ghost_blue_flag == false)) {
-      pink_ghost_sprite._0_1_ =
-           pink_ghost_orientation * '\x02' + counter__change_every_8_frames + 0x20;
-    }
-    if ((blue_ghost_state != ALIVE) ||
-       (inky_sprite._0_1_ = orange_ghost_sprite._0_1_, blue_ghost_blue_flag == false)) {
-      inky_sprite._0_1_ = blue_ghost_orientation * '\x02' + counter__change_every_8_frames + 0x20;
-    }
-    if ((orange_ghost_state != ALIVE) || (orange_ghost_blue_flag == false)) {
-      orange_ghost_sprite._0_1_ =
-           orange_ghost_orientation * '\x02' + counter__change_every_8_frames + 0x20;
-    }
+  bVar1 = counter__change_every_8_frames;
+  cVar3 = counter__change_every_8_frames + 0x1c;
+  *(char *)(phVar5 + 1) = cVar3;
+  *(char *)(phVar5 + 2) = cVar3;
+  *(char *)(phVar5 + 3) = cVar3;
+  *(char *)(phVar5 + 4) = cVar3;
+  if ((red_ghost_state != ALIVE) || (red_ghost_blue_flag == false)) {
+    *(character_orientation_e *)(phVar5 + 1) = red_ghost_orientation * '\x02' + bVar1 + ' ';
   }
+  if ((pink_ghost_state != ALIVE) || (pink_ghost_blue_flag == false)) {
+    *(character_orientation_e *)(phVar5 + 2) = pink_ghost_orientation * '\x02' + bVar1 + ' ';
+  }
+  if ((blue_ghost_state != ALIVE) || (blue_ghost_blue_flag == false)) {
+    *(character_orientation_e *)(phVar5 + 3) = blue_ghost_orientation * '\x02' + bVar1 + ' ';
+  }
+  if ((orange_ghost_state != ALIVE) || (orange_ghost_blue_flag == false)) {
+    *(character_orientation_e *)(phVar5 + 4) = orange_ghost_orientation * '\x02' + bVar1 + ' ';
+  }
+LAB_ram_15b4:
+  *(undefined2 *)((undefined *)register0x44 + -2) = 0x15b7;
   pacman_only_check_for_and_handle_big_pac_man_sprites_in_1st_cutscene
-            ((short)&start_of_sprites_address);
-  pacman_only_check_for_and_handle_big_pac_man_sprites_in_2nd_cutscene((short)phVar2);
-  pacman_only_check_for_and_handle_big_pac_man_sprites_in_3rd_cutscene((short)phVar2);
-  if (bVar1 == 0) {
+            (phVar5,((undefined *)register0x44)[-2]);
+  *(undefined2 *)((undefined *)register0x44 + -2) = 0x15ba;
+  pacman_only_check_for_and_handle_big_pac_man_sprites_in_2nd_cutscene
+            (phVar5,((undefined *)register0x44)[-2]);
+  *(undefined2 *)((undefined *)register0x44 + -2) = 0x15bd;
+  pacman_only_check_for_and_handle_big_pac_man_sprites_in_3rd_cutscene
+            (phVar5,((undefined *)register0x44)[-2]);
+  if (bVar2 != 0) {
+    red_ghost_sprite._0_1_ = red_ghost_sprite._0_1_ | 0xc0;
+    pink_ghost_sprite._0_1_ = pink_ghost_sprite._0_1_ | 0xc0;
+    blue_sprite._0_1_ = blue_sprite._0_1_ | 0xc0;
+    orange_ghost_sprite._0_1_ = orange_ghost_sprite._0_1_ | 0xc0;
+    fruit_sprite._0_1_ = fruit_sprite._0_1_ | 0xc0;
     return;
   }
-  red_ghost_sprite._0_1_ = red_ghost_sprite._0_1_ | 0xc0;
-  pink_ghost_sprite._0_1_ = pink_ghost_sprite._0_1_ | 0xc0;
-  inky_sprite._0_1_ = inky_sprite._0_1_ | 0xc0;
-  orange_ghost_sprite._0_1_ = orange_ghost_sprite._0_1_ | 0xc0;
-  fruit_sprite._0_1_ = fruit_sprite._0_1_ | 0xc0;
   return;
 }
 
@@ -4610,53 +4849,90 @@ void update_pacman_orientation(undefined2 param_1,short param_2)
   byte bVar1;
   char cVar2;
   char cVar3;
+  undefined **ppuVar4;
+  undefined *puStack2;
   
-  bVar1 = counter__change_every_8_frames;
   cVar3 = (char)((ushort)param_1 >> 8);
   if (pacman_dead_animation_state == 0) {
-    if (number_of_ghost_killed_but_no_collision_for_yet == 0) {
-      jump_table((undefined *)orientation_fn_table,pacman_orientation);
-      return;
+    if (number_of_ghost_killed_but_no_collision_for_yet != 0) goto LAB_ram_15b4;
+    ppuVar4 = &puStack2;
+    ppuVar4 = &puStack2;
+    ppuVar4 = &puStack2;
+    ppuVar4 = &puStack2;
+    ppuVar4 = &puStack2;
+    ppuVar4 = &puStack2;
+    puStack2 = &return_address;
+                    // WARNING: Return address prevents inlining here
+    jump_table_fn((undefined *)orientation_fn_table,pacman_orientation);
+    register0x44 = (BADSPACEBASE *)&puStack2;
+    if (cVar3 != '\0') {
+      if ((mspac_sprite._0_1_ & 0xc0) == 0) {
+        mspac_sprite._0_1_ = mspac_sprite._0_1_ | 0xc0;
+        register0x44 = (BADSPACEBASE *)ppuVar4;
+      }
+      else {
+        if (pacman_orientation == left) {
+          register0x44 = (BADSPACEBASE *)ppuVar4;
+          if ((mspac_sprite._0_1_ & 0x80) != 0) {
+            mspac_sprite._0_1_ = mspac_sprite._0_1_ ^ 0xc0;
+            register0x44 = (BADSPACEBASE *)ppuVar4;
+          }
+        }
+        else {
+          register0x44 = (BADSPACEBASE *)ppuVar4;
+          if ((pacman_orientation == up) &&
+             (register0x44 = (BADSPACEBASE *)ppuVar4, (mspac_sprite._0_1_ & 0x40) != 0)) {
+            mspac_sprite._0_1_ = mspac_sprite._0_1_ ^ 0xc0;
+            register0x44 = (BADSPACEBASE *)ppuVar4;
+          }
+        }
+      }
     }
   }
-  else {
                     // the next section of code toggles the sprites for the ghosts based on the
                     // counter that flips every 8 frames
                     // 
-    cVar2 = counter__change_every_8_frames + 0x1c;
+  bVar1 = counter__change_every_8_frames;
+  cVar2 = counter__change_every_8_frames + 0x1c;
                     // toggle between #1C and #1D (edible ghost sprites) for all ghosts ... those
                     // that are not edible are changed again later
                     // 
-    *(char *)(param_2 + 2) = cVar2;
-    *(char *)(param_2 + 4) = cVar2;
-    *(char *)(param_2 + 6) = cVar2;
-    *(char *)(param_2 + 8) = cVar2;
-    if ((red_ghost_state != ALIVE) || (red_ghost_blue_flag == false)) {
-      *(char *)(param_2 + 2) = red_ghost_orientation * '\x02' + bVar1 + ' ';
-    }
-    if ((pink_ghost_state != ALIVE) || (pink_ghost_blue_flag == false)) {
-      *(char *)(param_2 + 4) = pink_ghost_orientation * '\x02' + bVar1 + ' ';
-    }
-    if ((blue_ghost_state != ALIVE) || (blue_ghost_blue_flag == false)) {
-      *(char *)(param_2 + 6) = blue_ghost_orientation * '\x02' + bVar1 + ' ';
-    }
-    if ((orange_ghost_state != ALIVE) || (orange_ghost_blue_flag == false)) {
-      *(char *)(param_2 + 8) = orange_ghost_orientation * '\x02' + bVar1 + ' ';
-    }
+  *(char *)(param_2 + 2) = cVar2;
+  *(char *)(param_2 + 4) = cVar2;
+  *(char *)(param_2 + 6) = cVar2;
+  *(char *)(param_2 + 8) = cVar2;
+  if ((red_ghost_state != ALIVE) || (red_ghost_blue_flag == false)) {
+    *(char *)(param_2 + 2) = red_ghost_orientation * '\x02' + bVar1 + ' ';
   }
-  pacman_only_check_for_and_handle_big_pac_man_sprites_in_1st_cutscene(param_2);
-  pacman_only_check_for_and_handle_big_pac_man_sprites_in_2nd_cutscene(param_2);
-  pacman_only_check_for_and_handle_big_pac_man_sprites_in_3rd_cutscene(param_2);
-  if (cVar3 == '\0') {
-    return;
+  if ((pink_ghost_state != ALIVE) || (pink_ghost_blue_flag == false)) {
+    *(char *)(param_2 + 4) = pink_ghost_orientation * '\x02' + bVar1 + ' ';
   }
+  if ((blue_ghost_state != ALIVE) || (blue_ghost_blue_flag == false)) {
+    *(char *)(param_2 + 6) = blue_ghost_orientation * '\x02' + bVar1 + ' ';
+  }
+  if ((orange_ghost_state != ALIVE) || (orange_ghost_blue_flag == false)) {
+    *(char *)(param_2 + 8) = orange_ghost_orientation * '\x02' + bVar1 + ' ';
+  }
+LAB_ram_15b4:
+  *(undefined2 *)((undefined *)register0x44 + -2) = 0x15b7;
+  pacman_only_check_for_and_handle_big_pac_man_sprites_in_1st_cutscene
+            (param_2,((undefined *)register0x44)[-2]);
+  *(undefined2 *)((undefined *)register0x44 + -2) = 0x15ba;
+  pacman_only_check_for_and_handle_big_pac_man_sprites_in_2nd_cutscene
+            (param_2,((undefined *)register0x44)[-2]);
+  *(undefined2 *)((undefined *)register0x44 + -2) = 0x15bd;
+  pacman_only_check_for_and_handle_big_pac_man_sprites_in_3rd_cutscene
+            (param_2,((undefined *)register0x44)[-2]);
+  if (cVar3 != '\0') {
                     // 2 player and cocktail
                     // 
-  red_ghost_sprite._0_1_ = red_ghost_sprite._0_1_ | 0xc0;
-  pink_ghost_sprite._0_1_ = pink_ghost_sprite._0_1_ | 0xc0;
-  inky_sprite._0_1_ = inky_sprite._0_1_ | 0xc0;
-  orange_ghost_sprite._0_1_ = orange_ghost_sprite._0_1_ | 0xc0;
-  fruit_sprite._0_1_ = fruit_sprite._0_1_ | 0xc0;
+    red_ghost_sprite._0_1_ = red_ghost_sprite._0_1_ | 0xc0;
+    pink_ghost_sprite._0_1_ = pink_ghost_sprite._0_1_ | 0xc0;
+    blue_sprite._0_1_ = blue_sprite._0_1_ | 0xc0;
+    orange_ghost_sprite._0_1_ = orange_ghost_sprite._0_1_ | 0xc0;
+    fruit_sprite._0_1_ = fruit_sprite._0_1_ | 0xc0;
+    return;
+  }
   return;
 }
 
@@ -4721,7 +4997,7 @@ void pacman_only_check_for_and_handle_big_pac_man_sprites_in_2nd_cutscene(short 
                     // pac-man only, not used in ms. pac
                     // arrive here during 2nd cutscene
                     // 
-  if (pacman_position.x == 0x3d) {
+  if (pacman_position_tile_position.x == 0x3d) {
     *(undefined *)(param_1 + 0xb) = 0;
   }
   if (bVar1 < 10) {
@@ -4752,7 +5028,7 @@ void pacman_only_check_for_and_handle_big_pac_man_sprites_in_3rd_cutscene(short 
                     // pac-man only, not used is ms. pac
                     // arrive here during 3rd cutscene
                     // 
-  if (pacman_position.x == 0x3d) {
+  if (pacman_position_tile_position.x == 0x3d) {
     *(undefined *)(param_1 + 0xb) = 0;
   }
   if (bVar1 == 0) {
@@ -4842,13 +5118,14 @@ void check_for_collision_with_regular_ghost(void)
                     //  called from #1039
                     // 
   number_of_ghost_killed_but_no_collision_for_yet = 4;
-  if (((((orange_ghost_state != ALIVE) || (orange_ghost_tile_position_2 != pacman_position)) &&
+  if (((((orange_ghost_state != ALIVE) ||
+        (orange_ghost_tile_position_2 != pacman_position_tile_position)) &&
        ((number_of_ghost_killed_but_no_collision_for_yet = 3, blue_ghost_state != ALIVE ||
-        (blue_ghost_tile_position_2 != pacman_position)))) &&
+        (blue_ghost_tile_position_2 != pacman_position_tile_position)))) &&
       ((number_of_ghost_killed_but_no_collision_for_yet = 2, pink_ghost_state != ALIVE ||
-       (pink_ghost_tile_position_2 != pacman_position)))) &&
+       (pink_ghost_tile_position_2 != pacman_position_tile_position)))) &&
      ((number_of_ghost_killed_but_no_collision_for_yet = 1, red_ghost_state != ALIVE ||
-      (red_ghost_tile_position_2 != pacman_position)))) {
+      (red_ghost_tile_position_2 != pacman_position_tile_position)))) {
     number_of_ghost_killed_but_no_collision_for_yet = 0;
   }
                     // HACK3
@@ -4932,7 +5209,7 @@ void handles_pacman_movement(void)
   char cVar6;
   ushort uVar7;
   byte *pbVar8;
-  tile_coord_yx_t *sprite_location;
+  sprite_coord_yx_t *sprite_location;
   
                     // Hack code:
                     // HACK8 (1 of 3)
@@ -4990,7 +5267,7 @@ void handles_pacman_movement(void)
                     // all pacman movement
                     // 
   related_to_number_of_pills_eaten_before_last_pacman_move = dots_eaten;
-  if ((pacman_position.x < 0x21) || (0x3a < pacman_position.x)) {
+  if ((pacman_position_tile_position.x < 0x21) || (0x3a < pacman_position_tile_position.x)) {
                     // this sub is only called while player is in a tunnel
                     // 
     pacman_about_to_enter_a_tunnel = true;
@@ -5034,8 +5311,8 @@ LAB_ram_1a19:
         bVar4 = 0;
         is_sprite_using_tunnel(5);
         if (!(bool)(bVar4 & 1)) {
-          insert_task((word *)&task_core_t_ram_1a40);
-          return;
+                    // WARNING: Return address prevents inlining here
+          insert_task(&task_pacman_AI_movement_when_demo);
         }
         pacman_tile_pos_in_demo_and_cut_scenes =
              update_coord(&pacman_tile_pos_in_demo_and_cut_scenes,&wanted_pacman_tile_changes);
@@ -5094,8 +5371,8 @@ LAB_ram_1a19:
     }
                     // movement checks return to here
                     // 
-    sprite_location = &pacman_position;
-    bVar4 = get_from_screen_position(&pacman_position,&wanted_pacman_tile_changes);
+    sprite_location = &pacman_position_tile_position;
+    bVar4 = get_from_screen_position(&pacman_position_tile_position,&wanted_pacman_tile_changes);
     if ((bVar4 & 0xc0) == 0xc0) {
       cVar6 = cVar6 + -1;
       if (cVar6 != '\0') {
@@ -5147,13 +5424,13 @@ LAB_ram_1950:
                     // arrive here when cornering up from the right side
                     // or when cornering down from the right side
                     // 
-        pacman_coord = (tile_coord_yx_t)
+        pacman_coord = (sprite_coord_yx_t)
                        ((ushort)pacman_coord & 0xff | (ushort)(byte)(bVar5 + 1) << 8);
       }
       else {
                     // cornering up from the left side, or down from the left side
                     // 
-        pacman_coord = (tile_coord_yx_t)
+        pacman_coord = (sprite_coord_yx_t)
                        ((ushort)pacman_coord & 0xff | (ushort)(byte)(bVar5 - 1) << 8);
       }
     }
@@ -5163,12 +5440,14 @@ LAB_ram_1950:
       if ((bVar4 & 7) < 4) {
                     // cornering right from down , cornering left from down
                     // 
-        pacman_coord = (tile_coord_yx_t)((ushort)pacman_coord & 0xff00 | (ushort)(byte)(bVar4 + 1));
+        pacman_coord = (sprite_coord_yx_t)
+                       ((ushort)pacman_coord & 0xff00 | (ushort)(byte)(bVar4 + 1));
       }
       else {
                     // cornering up to the left or up to the right
                     // 
-        pacman_coord = (tile_coord_yx_t)((ushort)pacman_coord & 0xff00 | (ushort)(byte)(bVar4 - 1));
+        pacman_coord = (sprite_coord_yx_t)
+                       ((ushort)pacman_coord & 0xff00 | (ushort)(byte)(bVar4 - 1));
       }
     }
   }
@@ -5176,7 +5455,7 @@ LAB_ram_1985:
                     // arrive here from several locations
                     // HL has the expected new position of a sprite
                     // 
-  pacman_position = convert_sprite_position_to_tile_position(pacman_coord);
+  pacman_position_tile_position = convert_sprite_position_to_tile_position(pacman_coord);
   bVar2 = pacman_about_to_enter_a_tunnel;
   pacman_about_to_enter_a_tunnel = false;
   if (bVar2 != false) {
@@ -5196,15 +5475,16 @@ LAB_ram_1985:
     fruit_sprite._0_1_ = fruit_points + 2;
                     // arrive here when fruit is eaten
                     // 
-    add_to_task_list(0x19,fruit_points);
+    add_to_task_list(update_score_then_draw,fruit_points);
     TT04_clear_fruit_points();
-    add_timed_task(&task_timed_t_ram_19c5);
+                    // WARNING: Return address prevents inlining here
+    add_timed_task(&task_clear_fruit_position);
     channel_3_effect.num = channel_3_effect.num | 4;
   }
                     // arrive here when no fruit eaten from fruit eating check subroutine
                     // 
   delay_pacman_movement = PACMAN_NOT_EATING;
-  pbVar8 = convert_xy_to_screen_position(pacman_position);
+  pbVar8 = convert_xy_to_screen_position(pacman_position_tile_position);
   bVar4 = *pbVar8;
   if ((bVar4 != 0x10) && (bVar4 != 0x14)) {
     return;
@@ -5215,7 +5495,7 @@ LAB_ram_1985:
   dots_eaten = dots_eaten + 1;
   bVar5 = (bVar4 & 0xf) >> 1;
   *pbVar8 = 0x40;
-  add_to_task_list(0x19,(bVar4 & 0xf) >> 2);
+  add_to_task_list(update_score_then_draw,(bVar4 & 0xf) >> 2);
                     // task #19 will update score.  B has code for items scored, draw score on
                     // screen, check for high score and extra lives
                     // 
@@ -5247,8 +5527,8 @@ void can_pacman_eat_big_pill(void)
   red_ghost_sprite.color = 0x11;
   pink_ghost_sprite._0_1_ = 0x1c;
   pink_ghost_sprite.color = 0x11;
-  inky_sprite._0_1_ = 0x1c;
-  inky_sprite.color = 0x11;
+  blue_sprite._0_1_ = 0x1c;
+  blue_sprite.color = 0x11;
   orange_ghost_sprite._0_1_ = 0x1c;
   orange_ghost_sprite.color = 0x11;
   power_pill_effect = true;
@@ -5285,8 +5565,8 @@ void pacman_eat_big_pill(void)
   red_ghost_sprite.color = 0x11;
   pink_ghost_sprite._0_1_ = 0x1c;
   pink_ghost_sprite.color = 0x11;
-  inky_sprite._0_1_ = 0x1c;
-  inky_sprite.color = 0x11;
+  blue_sprite._0_1_ = 0x1c;
+  blue_sprite.color = 0x11;
   orange_ghost_sprite._0_1_ = 0x1c;
   orange_ghost_sprite.color = 0x11;
   power_pill_effect = true;
@@ -5341,7 +5621,7 @@ void control_movement_red_ghost(void)
   ushort uVar1;
   byte bVar2;
   short sVar3;
-  tile_coord_yx_t tVar4;
+  sprite_coord_yx_t sVar4;
   
                     // called from several locations
                     // 
@@ -5390,63 +5670,66 @@ void control_movement_red_ghost(void)
       handles_red_ghost_movement();
       return;
     }
-    if (red_ghost_first_difficulty_flag != false) {
-      uVar1 = pacman_state.first_difficulty_flag._2_2_ * 2;
-      sVar3 = (ushort)pacman_state.first_difficulty_flag * 2 +
-              (ushort)CARRY2(pacman_state.first_difficulty_flag._2_2_,
-                             pacman_state.first_difficulty_flag._2_2_);
-      if (CARRY2((ushort)pacman_state.first_difficulty_flag,
-                 (ushort)pacman_state.first_difficulty_flag) == false) {
-        pacman_state.first_difficulty_flag._0_2_ = sVar3;
-        pacman_state.first_difficulty_flag._2_2_ = uVar1;
+    if (red_ghost_first_difficulty_flag == false) {
+      uVar1 = red_ghost_state.normal_state._2_2_ * 2;
+      sVar3 = (ushort)red_ghost_state.normal_state * 2 +
+              (ushort)CARRY2(red_ghost_state.normal_state._2_2_,red_ghost_state.normal_state._2_2_);
+      if (CARRY2((ushort)red_ghost_state.normal_state,(ushort)red_ghost_state.normal_state) != false
+         ) {
+        red_ghost_state.normal_state._2_1_ = (char)uVar1;
+        red_ghost_state.normal_state._2_2_ =
+             uVar1 & 0xff00 | (ushort)(byte)(red_ghost_state.normal_state._2_1_ + 1);
+        if (red_ghost_Y_tile_changes_A.y == left_right) {
+        }
+        else {
+          red_ghost_coord.x = red_ghost_coord.y;
+        }
+        red_ghost_state.normal_state._0_2_ = sVar3;
+        if ((red_ghost_coord.x & 7) == 4) {
+          bVar2 = 0;
+          is_sprite_using_tunnel(1);
+          if (!(bool)(bVar2 & 1)) {
+            if (red_ghost_blue_flag == false) {
+              sVar4 = convert_xy_to_color_screen_position(red_ghost_xy_tile_pos);
+              if (*(char *)sVar4 != '\x1a') {
+                    // WARNING: Return address prevents inlining here
+                insert_task(&task_red_ghost_AI);
+              }
+            }
+            else {
+                    // WARNING: Return address prevents inlining here
+              insert_task(&task_red_ghost_movement_when_power_pill);
+            }
+          }
+          is_reverse_red_ghost_direction_time();
+          red_ghost_xy_tile_pos = update_coord(&red_ghost_xy_tile_pos,&red_ghost_xy_tile_changes);
+          red_ghost_Y_tile_changes_A = red_ghost_xy_tile_changes;
+          red_ghost_previous_orientation = red_ghost_orientation;
+        }
+        red_ghost_coord =
+             update_coord(&red_ghost_coord,(sprite_coord_yx_t *)&red_ghost_Y_tile_changes_A);
+        red_ghost_tile_position_2 = convert_sprite_position_to_tile_position(red_ghost_coord);
         return;
       }
-      pacman_state.first_difficulty_flag._2_1_ = (char)uVar1;
-      pacman_state.first_difficulty_flag._2_2_ =
-           uVar1 & 0xff00 | (ushort)(byte)(pacman_state.first_difficulty_flag._2_1_ + 1);
-      pacman_state.first_difficulty_flag._0_2_ = sVar3;
-      handles_red_ghost_movement();
-      return;
-    }
-    uVar1 = red_ghost_state.normal_state._2_2_ * 2;
-    sVar3 = (ushort)red_ghost_state.normal_state * 2 +
-            (ushort)CARRY2(red_ghost_state.normal_state._2_2_,red_ghost_state.normal_state._2_2_);
-    if (CARRY2((ushort)red_ghost_state.normal_state,(ushort)red_ghost_state.normal_state) == false)
-    {
       red_ghost_state.normal_state._0_2_ = sVar3;
       red_ghost_state.normal_state._2_2_ = uVar1;
       return;
     }
-    red_ghost_state.normal_state._2_1_ = (char)uVar1;
-    red_ghost_state.normal_state._2_2_ =
-         uVar1 & 0xff00 | (ushort)(byte)(red_ghost_state.normal_state._2_1_ + 1);
-    if (red_ghost_Y_tile_changes_A.y == left_right) {
+    uVar1 = pacman_state.first_difficulty_flag._2_2_ * 2;
+    sVar3 = (ushort)pacman_state.first_difficulty_flag * 2 +
+            (ushort)CARRY2(pacman_state.first_difficulty_flag._2_2_,
+                           pacman_state.first_difficulty_flag._2_2_);
+    if (CARRY2((ushort)pacman_state.first_difficulty_flag,(ushort)pacman_state.first_difficulty_flag
+              ) == false) {
+      pacman_state.first_difficulty_flag._0_2_ = sVar3;
+      pacman_state.first_difficulty_flag._2_2_ = uVar1;
+      return;
     }
-    else {
-      red_ghost_coord.x = red_ghost_coord.y;
-    }
-    red_ghost_state.normal_state._0_2_ = sVar3;
-    if ((red_ghost_coord.x & 7) == 4) {
-      bVar2 = 0;
-      is_sprite_using_tunnel(1);
-      if (!(bool)(bVar2 & 1)) {
-        if (red_ghost_blue_flag != false) {
-          insert_task((word *)&task_core_t_ram_1c06);
-          return;
-        }
-        tVar4 = convert_xy_to_color_screen_position(red_ghost_xy_tile_pos);
-        if (*(char *)tVar4 != '\x1a') {
-          insert_task((word *)&task_core_t_ram_1c17);
-          return;
-        }
-      }
-      is_reverse_red_ghost_direction_time();
-      red_ghost_xy_tile_pos = update_coord(&red_ghost_xy_tile_pos,&red_ghost_xy_tile_changes);
-      red_ghost_Y_tile_changes_A = red_ghost_xy_tile_changes;
-      red_ghost_previous_orientation = red_ghost_orientation;
-    }
-    red_ghost_coord = update_coord(&red_ghost_coord,(tile_coord_yx_t *)&red_ghost_Y_tile_changes_A);
-    red_ghost_tile_position_2 = convert_sprite_position_to_tile_position(red_ghost_coord);
+    pacman_state.first_difficulty_flag._2_1_ = (char)uVar1;
+    pacman_state.first_difficulty_flag._2_2_ =
+         uVar1 & 0xff00 | (ushort)(byte)(pacman_state.first_difficulty_flag._2_1_ + 1);
+    pacman_state.first_difficulty_flag._0_2_ = sVar3;
+    handles_red_ghost_movement();
     return;
   }
   uVar1 = red_ghost_state.speed_state._2_2_ * 2;
@@ -5471,7 +5754,7 @@ void handles_red_ghost_movement(void)
 
 {
   byte bVar1;
-  tile_coord_yx_t tVar2;
+  sprite_coord_yx_t sVar2;
   
                     // called from #10C0 and several other places
                     // handles red ghost movement
@@ -5485,14 +5768,16 @@ void handles_red_ghost_movement(void)
     bVar1 = 0;
     is_sprite_using_tunnel(1);
     if (!(bool)(bVar1 & 1)) {
-      if (red_ghost_blue_flag != false) {
-        insert_task((word *)&task_core_t_ram_1c06);
-        return;
+      if (red_ghost_blue_flag == false) {
+        sVar2 = convert_xy_to_color_screen_position(red_ghost_xy_tile_pos);
+        if (*(char *)sVar2 != '\x1a') {
+                    // WARNING: Return address prevents inlining here
+          insert_task(&task_red_ghost_AI);
+        }
       }
-      tVar2 = convert_xy_to_color_screen_position(red_ghost_xy_tile_pos);
-      if (*(char *)tVar2 != '\x1a') {
-        insert_task((word *)&task_core_t_ram_1c17);
-        return;
+      else {
+                    // WARNING: Return address prevents inlining here
+        insert_task(&task_red_ghost_movement_when_power_pill);
       }
     }
     is_reverse_red_ghost_direction_time();
@@ -5500,7 +5785,7 @@ void handles_red_ghost_movement(void)
     red_ghost_Y_tile_changes_A = red_ghost_xy_tile_changes;
     red_ghost_previous_orientation = red_ghost_orientation;
   }
-  red_ghost_coord = update_coord(&red_ghost_coord,(tile_coord_yx_t *)&red_ghost_Y_tile_changes_A);
+  red_ghost_coord = update_coord(&red_ghost_coord,(sprite_coord_yx_t *)&red_ghost_Y_tile_changes_A);
   red_ghost_tile_position_2 = convert_sprite_position_to_tile_position(red_ghost_coord);
   return;
 }
@@ -5513,7 +5798,7 @@ void control_movement_pink_ghost(void)
   ushort uVar1;
   byte bVar2;
   short sVar3;
-  tile_coord_yx_t tVar4;
+  sprite_coord_yx_t sVar4;
   
                     // control movement patterns for pink ghost
                     // called from #104A
@@ -5547,43 +5832,45 @@ void control_movement_pink_ghost(void)
     uVar1 = pink_ghost_state.normal_state._2_2_ * 2;
     sVar3 = (ushort)pink_ghost_state.normal_state * 2 +
             (ushort)CARRY2(pink_ghost_state.normal_state._2_2_,pink_ghost_state.normal_state._2_2_);
-    if (CARRY2((ushort)pink_ghost_state.normal_state,(ushort)pink_ghost_state.normal_state) == false
+    if (CARRY2((ushort)pink_ghost_state.normal_state,(ushort)pink_ghost_state.normal_state) != false
        ) {
+      pink_ghost_state.normal_state._2_1_ = (char)uVar1;
+      pink_ghost_state.normal_state._2_2_ =
+           uVar1 & 0xff00 | (ushort)(byte)(pink_ghost_state.normal_state._2_1_ + 1);
+      if (pink_ghost_Y_tile_changes_A.y == left_right) {
+      }
+      else {
+        pink_ghost_coord.x = pink_ghost_coord.y;
+      }
       pink_ghost_state.normal_state._0_2_ = sVar3;
-      pink_ghost_state.normal_state._2_2_ = uVar1;
+      if ((pink_ghost_coord.x & 7) == 4) {
+        bVar2 = 0;
+        is_sprite_using_tunnel(2);
+        if (!(bool)(bVar2 & 1)) {
+          if (pink_ghost_blue_flag == false) {
+            sVar4 = convert_xy_to_color_screen_position(pink_ghost_xy_tile_pos);
+            if (*(char *)sVar4 != '\x1a') {
+                    // WARNING: Return address prevents inlining here
+              insert_task(&task_pink_ghost_AI);
+            }
+          }
+          else {
+                    // WARNING: Return address prevents inlining here
+            insert_task(&task_pink_movement_when_power_pill);
+          }
+        }
+        is_reverse_pink_ghost_direction_time();
+        pink_ghost_xy_tile_pos = update_coord(&pink_ghost_xy_tile_pos,&pink_ghost_xy_tile_changes);
+        pink_ghost_Y_tile_changes_A = pink_ghost_xy_tile_changes;
+        pink_ghost_previous_orientation = pink_ghost_orientation;
+      }
+      pink_ghost_coord =
+           update_coord(&pink_ghost_coord,(sprite_coord_yx_t *)&pink_ghost_Y_tile_changes_A);
+      pink_ghost_tile_position_2 = convert_sprite_position_to_tile_position(pink_ghost_coord);
       return;
     }
-    pink_ghost_state.normal_state._2_1_ = (char)uVar1;
-    pink_ghost_state.normal_state._2_2_ =
-         uVar1 & 0xff00 | (ushort)(byte)(pink_ghost_state.normal_state._2_1_ + 1);
-    if (pink_ghost_Y_tile_changes_A.y == left_right) {
-    }
-    else {
-      pink_ghost_coord.x = pink_ghost_coord.y;
-    }
     pink_ghost_state.normal_state._0_2_ = sVar3;
-    if ((pink_ghost_coord.x & 7) == 4) {
-      bVar2 = 0;
-      is_sprite_using_tunnel(2);
-      if (!(bool)(bVar2 & 1)) {
-        if (pink_ghost_blue_flag != false) {
-          insert_task((word *)&task_core_t_ram_1cdd);
-          return;
-        }
-        tVar4 = convert_xy_to_color_screen_position(pink_ghost_xy_tile_pos);
-        if (*(char *)tVar4 != '\x1a') {
-          insert_task((word *)&task_core_t_ram_1cee);
-          return;
-        }
-      }
-      is_reverse_pink_ghost_direction_time();
-      pink_ghost_xy_tile_pos = update_coord(&pink_ghost_xy_tile_pos,&pink_ghost_xy_tile_changes);
-      pink_ghost_Y_tile_changes_A = pink_ghost_xy_tile_changes;
-      pink_ghost_previous_orientation = pink_ghost_orientation;
-    }
-    pink_ghost_coord =
-         update_coord(&pink_ghost_coord,(tile_coord_yx_t *)&pink_ghost_Y_tile_changes_A);
-    pink_ghost_tile_position_2 = convert_sprite_position_to_tile_position(pink_ghost_coord);
+    pink_ghost_state.normal_state._2_2_ = uVar1;
     return;
   }
   uVar1 = pink_ghost_state.speed_state._2_2_ * 2;
@@ -5608,7 +5895,7 @@ void handles_pink_ghost_movement(void)
 
 {
   byte bVar1;
-  tile_coord_yx_t tVar2;
+  sprite_coord_yx_t sVar2;
   
   if (pink_ghost_Y_tile_changes_A.y == left_right) {
   }
@@ -5619,14 +5906,16 @@ void handles_pink_ghost_movement(void)
     bVar1 = 0;
     is_sprite_using_tunnel(2);
     if (!(bool)(bVar1 & 1)) {
-      if (pink_ghost_blue_flag != false) {
-        insert_task((word *)&task_core_t_ram_1cdd);
-        return;
+      if (pink_ghost_blue_flag == false) {
+        sVar2 = convert_xy_to_color_screen_position(pink_ghost_xy_tile_pos);
+        if (*(char *)sVar2 != '\x1a') {
+                    // WARNING: Return address prevents inlining here
+          insert_task(&task_pink_ghost_AI);
+        }
       }
-      tVar2 = convert_xy_to_color_screen_position(pink_ghost_xy_tile_pos);
-      if (*(char *)tVar2 != '\x1a') {
-        insert_task((word *)&task_core_t_ram_1cee);
-        return;
+      else {
+                    // WARNING: Return address prevents inlining here
+        insert_task(&task_pink_movement_when_power_pill);
       }
     }
     is_reverse_pink_ghost_direction_time();
@@ -5634,8 +5923,8 @@ void handles_pink_ghost_movement(void)
     pink_ghost_Y_tile_changes_A = pink_ghost_xy_tile_changes;
     pink_ghost_previous_orientation = pink_ghost_orientation;
   }
-  pink_ghost_coord = update_coord(&pink_ghost_coord,(tile_coord_yx_t *)&pink_ghost_Y_tile_changes_A)
-  ;
+  pink_ghost_coord =
+       update_coord(&pink_ghost_coord,(sprite_coord_yx_t *)&pink_ghost_Y_tile_changes_A);
   pink_ghost_tile_position_2 = convert_sprite_position_to_tile_position(pink_ghost_coord);
   return;
 }
@@ -5648,7 +5937,7 @@ void control_movement_blue_ghost(void)
   ushort uVar1;
   byte bVar2;
   short sVar3;
-  tile_coord_yx_t tVar4;
+  sprite_coord_yx_t sVar4;
   
                     // check movement patterns for inky
                     // called from #104D
@@ -5682,43 +5971,45 @@ void control_movement_blue_ghost(void)
     uVar1 = blue_ghost_state.normal_state._2_2_ * 2;
     sVar3 = (ushort)blue_ghost_state.normal_state * 2 +
             (ushort)CARRY2(blue_ghost_state.normal_state._2_2_,blue_ghost_state.normal_state._2_2_);
-    if (CARRY2((ushort)blue_ghost_state.normal_state,(ushort)blue_ghost_state.normal_state) == false
+    if (CARRY2((ushort)blue_ghost_state.normal_state,(ushort)blue_ghost_state.normal_state) != false
        ) {
+      blue_ghost_state.normal_state._2_1_ = (char)uVar1;
+      blue_ghost_state.normal_state._2_2_ =
+           uVar1 & 0xff00 | (ushort)(byte)(blue_ghost_state.normal_state._2_1_ + 1);
+      if (blue_ghost_Y_tile_changes_A.y == left_right) {
+      }
+      else {
+        blue_ghost_coord.x = blue_ghost_coord.y;
+      }
       blue_ghost_state.normal_state._0_2_ = sVar3;
-      blue_ghost_state.normal_state._2_2_ = uVar1;
+      if ((blue_ghost_coord.x & 7) == 4) {
+        bVar2 = 0;
+        is_sprite_using_tunnel(3);
+        if (!(bool)(bVar2 & 1)) {
+          if (blue_ghost_blue_flag == false) {
+            sVar4 = convert_xy_to_color_screen_position(blue_ghost_xy_tile_pos);
+            if (*(char *)sVar4 != '\x1a') {
+                    // WARNING: Return address prevents inlining here
+              insert_task(&task_blue_ghost_AI);
+            }
+          }
+          else {
+                    // WARNING: Return address prevents inlining here
+            insert_task(&task_blue_ghost_movement_when_power_pill);
+          }
+        }
+        is_reverse_blue_ghost_direction_time();
+        blue_ghost_xy_tile_pos = update_coord(&blue_ghost_xy_tile_pos,&blue_ghost_xy_tile_changes);
+        blue_ghost_Y_tile_changes_A = blue_ghost_xy_tile_changes;
+        blue_ghost_previous_orientation = blue_ghost_orientation;
+      }
+      blue_ghost_coord =
+           update_coord(&blue_ghost_coord,(sprite_coord_yx_t *)&blue_ghost_Y_tile_changes_A);
+      blue_ghost_tile_position_2 = convert_sprite_position_to_tile_position(blue_ghost_coord);
       return;
     }
-    blue_ghost_state.normal_state._2_1_ = (char)uVar1;
-    blue_ghost_state.normal_state._2_2_ =
-         uVar1 & 0xff00 | (ushort)(byte)(blue_ghost_state.normal_state._2_1_ + 1);
-    if (blue_ghost_Y_tile_changes_A.y == left_right) {
-    }
-    else {
-      blue_ghost_coord.x = blue_ghost_coord.y;
-    }
     blue_ghost_state.normal_state._0_2_ = sVar3;
-    if ((blue_ghost_coord.x & 7) == 4) {
-      bVar2 = 0;
-      is_sprite_using_tunnel(3);
-      if (!(bool)(bVar2 & 1)) {
-        if (blue_ghost_blue_flag != false) {
-          insert_task((word *)&task_core_t_ram_1db4);
-          return;
-        }
-        tVar4 = convert_xy_to_color_screen_position(blue_ghost_xy_tile_pos);
-        if (*(char *)tVar4 != '\x1a') {
-          insert_task((word *)&task_core_t_ram_1dc5);
-          return;
-        }
-      }
-      is_reverse_blue_ghost_direction_time();
-      blue_ghost_xy_tile_pos = update_coord(&blue_ghost_xy_tile_pos,&blue_ghost_xy_tile_changes);
-      blue_ghost_Y_tile_changes_A = blue_ghost_xy_tile_changes;
-      blue_ghost_previous_orientation = blue_ghost_orientation;
-    }
-    blue_ghost_coord =
-         update_coord(&blue_ghost_coord,(tile_coord_yx_t *)&blue_ghost_Y_tile_changes_A);
-    blue_ghost_tile_position_2 = convert_sprite_position_to_tile_position(blue_ghost_coord);
+    blue_ghost_state.normal_state._2_2_ = uVar1;
     return;
   }
   uVar1 = blue_ghost_state.speed_state._2_2_ * 2;
@@ -5743,7 +6034,7 @@ void handles_blue_ghost_movement(void)
 
 {
   byte bVar1;
-  tile_coord_yx_t tVar2;
+  sprite_coord_yx_t sVar2;
   
   if (blue_ghost_Y_tile_changes_A.y == left_right) {
   }
@@ -5754,14 +6045,16 @@ void handles_blue_ghost_movement(void)
     bVar1 = 0;
     is_sprite_using_tunnel(3);
     if (!(bool)(bVar1 & 1)) {
-      if (blue_ghost_blue_flag != false) {
-        insert_task((word *)&task_core_t_ram_1db4);
-        return;
+      if (blue_ghost_blue_flag == false) {
+        sVar2 = convert_xy_to_color_screen_position(blue_ghost_xy_tile_pos);
+        if (*(char *)sVar2 != '\x1a') {
+                    // WARNING: Return address prevents inlining here
+          insert_task(&task_blue_ghost_AI);
+        }
       }
-      tVar2 = convert_xy_to_color_screen_position(blue_ghost_xy_tile_pos);
-      if (*(char *)tVar2 != '\x1a') {
-        insert_task((word *)&task_core_t_ram_1dc5);
-        return;
+      else {
+                    // WARNING: Return address prevents inlining here
+        insert_task(&task_blue_ghost_movement_when_power_pill);
       }
     }
     is_reverse_blue_ghost_direction_time();
@@ -5769,8 +6062,8 @@ void handles_blue_ghost_movement(void)
     blue_ghost_Y_tile_changes_A = blue_ghost_xy_tile_changes;
     blue_ghost_previous_orientation = blue_ghost_orientation;
   }
-  blue_ghost_coord = update_coord(&blue_ghost_coord,(tile_coord_yx_t *)&blue_ghost_Y_tile_changes_A)
-  ;
+  blue_ghost_coord =
+       update_coord(&blue_ghost_coord,(sprite_coord_yx_t *)&blue_ghost_Y_tile_changes_A);
   blue_ghost_tile_position_2 = convert_sprite_position_to_tile_position(blue_ghost_coord);
   return;
 }
@@ -5783,7 +6076,7 @@ void control_movement_orange_ghost(void)
   ushort uVar1;
   byte bVar2;
   short sVar3;
-  tile_coord_yx_t tVar4;
+  sprite_coord_yx_t sVar4;
   
                     // control movement patterns for orange ghost
                     // called from #1050
@@ -5818,44 +6111,46 @@ void control_movement_orange_ghost(void)
     sVar3 = (ushort)orange_ghost_state.normal_state * 2 +
             (ushort)CARRY2(orange_ghost_state.normal_state._2_2_,
                            orange_ghost_state.normal_state._2_2_);
-    if (CARRY2((ushort)orange_ghost_state.normal_state,(ushort)orange_ghost_state.normal_state) ==
+    if (CARRY2((ushort)orange_ghost_state.normal_state,(ushort)orange_ghost_state.normal_state) !=
         false) {
+      orange_ghost_state.normal_state._2_1_ = (char)uVar1;
+      orange_ghost_state.normal_state._2_2_ =
+           uVar1 & 0xff00 | (ushort)(byte)(orange_ghost_state.normal_state._2_1_ + 1);
+      if (orange_ghost_Y_tile_change_A.y == left_right) {
+      }
+      else {
+        orange_ghost_coord.x = orange_ghost_coord.y;
+      }
       orange_ghost_state.normal_state._0_2_ = sVar3;
-      orange_ghost_state.normal_state._2_2_ = uVar1;
+      if ((orange_ghost_coord.x & 7) == 4) {
+        bVar2 = 0;
+        is_sprite_using_tunnel(4);
+        if (!(bool)(bVar2 & 1)) {
+          if (orange_ghost_blue_flag == false) {
+            sVar4 = convert_xy_to_color_screen_position(orange_ghost_xy_tile_pos);
+            if (*(char *)sVar4 != '\x1a') {
+                    // WARNING: Return address prevents inlining here
+              insert_task(&task_orange_ghost_AI);
+            }
+          }
+          else {
+                    // WARNING: Return address prevents inlining here
+            insert_task(&task_orange_ghost_movement_when_power_pill);
+          }
+        }
+        is_reverse_orange_ghost_direction_time();
+        orange_ghost_xy_tile_pos =
+             update_coord(&orange_ghost_xy_tile_pos,&orange_ghost_xy_tile_changes);
+        orange_ghost_Y_tile_change_A = orange_ghost_xy_tile_changes;
+        orange_ghost_previous_orientation = orange_ghost_orientation;
+      }
+      orange_ghost_coord =
+           update_coord(&orange_ghost_coord,(sprite_coord_yx_t *)&orange_ghost_Y_tile_change_A);
+      orange_ghost_tile_position_2 = convert_sprite_position_to_tile_position(orange_ghost_coord);
       return;
     }
-    orange_ghost_state.normal_state._2_1_ = (char)uVar1;
-    orange_ghost_state.normal_state._2_2_ =
-         uVar1 & 0xff00 | (ushort)(byte)(orange_ghost_state.normal_state._2_1_ + 1);
-    if (orange_ghost_Y_tile_change_A.y == left_right) {
-    }
-    else {
-      orange_ghost_coord.x = orange_ghost_coord.y;
-    }
     orange_ghost_state.normal_state._0_2_ = sVar3;
-    if ((orange_ghost_coord.x & 7) == 4) {
-      bVar2 = 0;
-      is_sprite_using_tunnel(4);
-      if (!(bool)(bVar2 & 1)) {
-        if (orange_ghost_blue_flag != false) {
-          insert_task((word *)&task_core_t_ram_1e8b);
-          return;
-        }
-        tVar4 = convert_xy_to_color_screen_position(orange_ghost_xy_tile_pos);
-        if (*(char *)tVar4 != '\x1a') {
-          insert_task((word *)&task_core_t_ram_1e9c);
-          return;
-        }
-      }
-      is_reverse_orange_ghost_direction_time();
-      orange_ghost_xy_tile_pos =
-           update_coord(&orange_ghost_xy_tile_pos,&orange_ghost_xy_tile_changes);
-      orange_ghost_Y_tile_change_A = orange_ghost_xy_tile_changes;
-      orange_ghost_previous_orientation = orange_ghost_orientation;
-    }
-    orange_ghost_coord =
-         update_coord(&orange_ghost_coord,(tile_coord_yx_t *)&orange_ghost_Y_tile_change_A);
-    orange_ghost_tile_position_2 = convert_sprite_position_to_tile_position(orange_ghost_coord);
+    orange_ghost_state.normal_state._2_2_ = uVar1;
     return;
   }
   uVar1 = orange_ghost_state.speed_state._2_2_ * 2;
@@ -5881,7 +6176,7 @@ void handles_orange_ghost_movement(void)
 
 {
   byte bVar1;
-  tile_coord_yx_t tVar2;
+  sprite_coord_yx_t sVar2;
   
   if (orange_ghost_Y_tile_change_A.y == left_right) {
   }
@@ -5892,14 +6187,16 @@ void handles_orange_ghost_movement(void)
     bVar1 = 0;
     is_sprite_using_tunnel(4);
     if (!(bool)(bVar1 & 1)) {
-      if (orange_ghost_blue_flag != false) {
-        insert_task((word *)&task_core_t_ram_1e8b);
-        return;
+      if (orange_ghost_blue_flag == false) {
+        sVar2 = convert_xy_to_color_screen_position(orange_ghost_xy_tile_pos);
+        if (*(char *)sVar2 != '\x1a') {
+                    // WARNING: Return address prevents inlining here
+          insert_task(&task_orange_ghost_AI);
+        }
       }
-      tVar2 = convert_xy_to_color_screen_position(orange_ghost_xy_tile_pos);
-      if (*(char *)tVar2 != '\x1a') {
-        insert_task((word *)&task_core_t_ram_1e9c);
-        return;
+      else {
+                    // WARNING: Return address prevents inlining here
+        insert_task(&task_orange_ghost_movement_when_power_pill);
       }
     }
     is_reverse_orange_ghost_direction_time();
@@ -5909,7 +6206,7 @@ void handles_orange_ghost_movement(void)
     orange_ghost_previous_orientation = orange_ghost_orientation;
   }
   orange_ghost_coord =
-       update_coord(&orange_ghost_coord,(tile_coord_yx_t *)&orange_ghost_Y_tile_change_A);
+       update_coord(&orange_ghost_coord,(sprite_coord_yx_t *)&orange_ghost_Y_tile_change_A);
   orange_ghost_tile_position_2 = convert_sprite_position_to_tile_position(orange_ghost_coord);
   return;
 }
@@ -5933,9 +6230,9 @@ void is_sprite_using_tunnel(byte sprite_tile_coord_index)
 
 {
   byte y;
-  tile_coord_yx_t *tile_coord;
+  sprite_coord_yx_t *tile_coord;
   
-  tile_coord = (tile_coord_yx_t *)(&pacman_coord.x + (byte)(sprite_tile_coord_index * '\x02'));
+  tile_coord = (sprite_coord_yx_t *)(&pacman_coord.x + (byte)(sprite_tile_coord_index * '\x02'));
   y = tile_coord->y;
   if (y == 0x1d) {
     tile_coord->y = 0x3d;
@@ -6177,10 +6474,10 @@ void vblank_continuation(bool test_mode)
 // 
 // HL := (IX) + (IY)
 
-tile_coord_yx_t update_coord(tile_coord_yx_t *sprite_location,tile_coord_yx_t *seek_location)
+sprite_coord_yx_t update_coord(sprite_coord_yx_t *sprite_location,sprite_coord_yx_t *seek_location)
 
 {
-  return (tile_coord_yx_t)
+  return (sprite_coord_yx_t)
          CONCAT11(sprite_location->x + seek_location->x,sprite_location->y + seek_location->y);
 }
 
@@ -6188,11 +6485,11 @@ tile_coord_yx_t update_coord(tile_coord_yx_t *sprite_location,tile_coord_yx_t *s
 
 // load A with screen value of position computed in (IX) + (IY)
 
-byte get_from_screen_position(tile_coord_yx_t *sprite_location,tile_coord_yx_t *seek_location)
+byte get_from_screen_position(sprite_coord_yx_t *sprite_location,sprite_coord_yx_t *seek_location)
 
 {
   byte *screen_position;
-  tile_coord_yx_t coord;
+  sprite_coord_yx_t coord;
   
   coord = update_coord(sprite_location,seek_location);
   screen_position = convert_xy_to_screen_position(coord);
@@ -6206,10 +6503,10 @@ byte get_from_screen_position(tile_coord_yx_t *sprite_location,tile_coord_yx_t *
 // at end, HL is loaded with tile position
 // 
 
-tile_coord_yx_t convert_sprite_position_to_tile_position(tile_coord_yx_t sprite_position)
+sprite_coord_yx_t convert_sprite_position_to_tile_position(sprite_coord_yx_t sprite_position)
 
 {
-  return (tile_coord_yx_t)
+  return (sprite_coord_yx_t)
          CONCAT11((byte)((ushort)sprite_position >> 0xb) + 0x1e,((byte)sprite_position >> 3) + 0x20)
   ;
 }
@@ -6219,29 +6516,28 @@ tile_coord_yx_t convert_sprite_position_to_tile_position(tile_coord_yx_t sprite_
 // converts pac-mans sprite position into a grid position
 // HL has sprite position at start, grid position at end
 
-byte * convert_xy_to_screen_position(tile_coord_yx_t coord)
+byte * convert_xy_to_screen_position(sprite_coord_yx_t coord)
 
 {
   char cVar1;
   
   cVar1 = (char)((ushort)coord >> 8);
-  return hardware_video_ram +
+  return hardware_screen_maze_area +
          (ushort)(byte)((char)coord - 0x20) +
-         CONCAT11(((byte)(cVar1 * '\b') >> 7) << 1 | (byte)(cVar1 * '\x10') >> 7,cVar1 * ' ') + 0x40
-  ;
+         CONCAT11(((byte)(cVar1 * '\b') >> 7) << 1 | (byte)(cVar1 * '\x10') >> 7,cVar1 * ' ');
 }
 
 
 
 // converts pac-man or ghost Y,X position in HL to a color screen location
 
-tile_coord_yx_t convert_xy_to_color_screen_position(tile_coord_yx_t coord)
+sprite_coord_yx_t convert_xy_to_color_screen_position(sprite_coord_yx_t coord)
 
 {
   byte *pbVar1;
   
   pbVar1 = convert_xy_to_screen_position(coord);
-  return (tile_coord_yx_t)(pbVar1 + 0x400);
+  return (sprite_coord_yx_t)(pbVar1 + 0x400);
 }
 
 
@@ -6249,16 +6545,16 @@ tile_coord_yx_t convert_xy_to_color_screen_position(tile_coord_yx_t coord)
 // checks for ghost entering a slowdown area in a tunnel
 // 
 
-void check_ghost_entering_tunnel_slowdown(tile_coord_yx_t coord,byte *delay)
+void check_ghost_entering_tunnel_slowdown(sprite_coord_yx_t coord,byte *delay)
 
 {
-  tile_coord_yx_t tVar1;
+  sprite_coord_yx_t sVar1;
   
-  tVar1 = convert_xy_to_color_screen_position(coord);
+  sVar1 = convert_xy_to_color_screen_position(coord);
                     // arrive here from #2060
                     // A is loaded with the color of the tile the ghost is on
                     // 
-  if ((*(byte *)tVar1 & 0x40) != 0) {
+  if ((*(byte *)sVar1 & 0x40) != 0) {
     *delay = 1;
     return;
   }
@@ -6408,154 +6704,166 @@ void state_for_1st_intermission(void)
   byte bVar2;
   char cVar3;
   byte bVar4;
-  byte in_C;
-  undefined2 uVar5;
   byte index;
-  ushort uVar6;
-  byte *pbVar7;
+  byte in_C;
+  undefined uVar5;
+  undefined2 uVar6;
+  ushort uVar7;
+  byte *pbVar8;
+  short sVar9;
+  char *pcVar10;
+  undefined *puVar11;
+  undefined1 *puVar12;
   byte *lookup_table;
-  short sVar8;
-  char *pcVar9;
-  undefined *puVar10;
-  undefined1 *puVar11;
-  byte **ppbVar12;
-  dereference_word_t dVar13;
+  byte **ppbVar13;
+  dereference_word_t dVar14;
   word *lookup_table_00;
   
   if (intermission_mode != true) {
-    insert_task((word *)&task_draw_they_meet);
+                    // WARNING: Return address prevents inlining here
+    insert_task(&task_draw_they_meet);
+    hardware_screen_maze_area[22][4] = 1;
+    BYTE_ARRAY_ARRAY_ram_4440[22][4] = 0x16;
+    intermissions_and_attract_mode_animation_main_routine(0);
     return;
   }
   if (false) {
     generate_animations(in_C);
   }
-  uVar6 = CONCAT11(6,in_C);
-  ppbVar12 = animation_current + 5;
+  uVar7 = CONCAT11(6,in_C);
+  ppbVar13 = animation_current + 5;
   do {
-    index = (byte)(uVar6 >> 8);
-    lookup_table = *ppbVar12;
+    uVar5 = (undefined)uVar7;
+    index = (byte)(uVar7 >> 8);
+    lookup_table = *ppbVar13;
     bVar2 = *lookup_table;
     if (bVar2 == 0xf0) {
 intermissions_and_attract_mode_animation_main_routine_animation_code_F0_loop:
       bVar2 = dereference_pointer_to_byte(lookup_table,1);
-      uVar5 = CONCAT11(index,bVar2);
-      dVar13 = dereference_pointer_to_word(WORD_ARRAY_ram_4f2e,index);
-      pbVar7 = (byte *)((uint5)dVar13 >> 8);
-      bVar2 = animation_code_f0_loop_sub_stuff((char)uVar5 + (char)((uint5)dVar13 >> 0x20));
-      *pbVar7 = bVar2;
-      lookup_table_00 = (word *)animation_code_f0_and_f1_sub_stuff(uVar5);
-      dVar13 = dereference_pointer_to_word(lookup_table_00,(byte)((ushort)uVar5 >> 8));
-      index = (byte)((ushort)uVar5 >> 8);
-      *(char *)((uint5)dVar13 >> 8) = (char)((uint5)dVar13 >> 0x20) + (char)uVar5;
+      uVar6 = CONCAT11(index,bVar2);
+      dVar14 = dereference_pointer_to_word(WORD_ARRAY_ram_4f2e,index);
+      pbVar8 = (byte *)((uint5)dVar14 >> 8);
+      bVar2 = animation_code_f0_loop_sub_stuff((char)uVar6 + (char)((uint5)dVar14 >> 0x20));
+      *pbVar8 = bVar2;
+      lookup_table_00 = (word *)animation_code_f0_and_f1_sub_stuff(uVar6);
+      dVar14 = dereference_pointer_to_word(lookup_table_00,(byte)((ushort)uVar6 >> 8));
+      index = (byte)((ushort)uVar6 >> 8);
+      *(char *)((uint5)dVar14 >> 8) = (char)((uint5)dVar14 >> 0x20) + (char)uVar6;
       bVar2 = dereference_pointer_to_byte(lookup_table,2);
-      uVar5 = CONCAT11(index,bVar2);
-      dVar13 = dereference_pointer_to_word(WORD_ARRAY_ram_4f2e,index);
-      sVar8 = (short)((uint5)dVar13 >> 8);
-      bVar2 = animation_code_f0_loop_sub_stuff((char)uVar5 + (char)((uint5)dVar13 >> 0x18));
-      *(byte *)(sVar8 + -1) = bVar2;
-      lookup_table_00 = (word *)animation_code_f0_and_f1_sub_stuff(uVar5);
-      dVar13 = dereference_pointer_to_word(lookup_table_00,(byte)((ushort)uVar5 >> 8));
-      *(char *)((short)((uint5)dVar13 >> 8) + -1) = (char)((uint5)dVar13 >> 0x18) + (char)uVar5;
-      pcVar9 = &DAT_ram_4f0f;
-      index = (byte)((ushort)uVar5 >> 8);
+      uVar6 = CONCAT11(index,bVar2);
+      dVar14 = dereference_pointer_to_word(WORD_ARRAY_ram_4f2e,index);
+      sVar9 = (short)((uint5)dVar14 >> 8);
+      bVar2 = animation_code_f0_loop_sub_stuff((char)uVar6 + (char)((uint5)dVar14 >> 0x18));
+      *(byte *)(sVar9 + -1) = bVar2;
+      lookup_table_00 = (word *)animation_code_f0_and_f1_sub_stuff(uVar6);
+      dVar14 = dereference_pointer_to_word(lookup_table_00,(byte)((ushort)uVar6 >> 8));
+      *(char *)((short)((uint5)dVar14 >> 8) + -1) = (char)((uint5)dVar14 >> 0x18) + (char)uVar6;
+      pcVar10 = &DAT_ram_4f0f;
+      index = (byte)((ushort)uVar6 >> 8);
       bVar2 = dereference_pointer_to_byte(&DAT_ram_4f0f,index);
       cVar3 = bVar2 + 1;
       while( true ) {
-        dVar13 = dereference_pointer_to_word(WORD_ARRAY_ram_4f3e,index);
-        bVar2 = dereference_pointer_to_byte((byte *)((uint5)dVar13 >> 0x18),cVar3 >> 1);
+        dVar14 = dereference_pointer_to_word(WORD_ARRAY_ram_4f3e,index);
+        bVar2 = dereference_pointer_to_byte((byte *)((uint5)dVar14 >> 0x18),cVar3 >> 1);
         if (bVar2 != 0xff) break;
         cVar3 = '\0';
       }
-      *pcVar9 = cVar3;
+      *pcVar10 = cVar3;
       bVar4 = dereference_pointer_to_byte(lookup_table,3);
-      dVar13 = dereference_pointer_to_word(&WORD_ram_4f4e,index);
-      lookup_table = (byte *)((uint5)dVar13 >> 8);
+      dVar14 = dereference_pointer_to_word(&WORD_ram_4f4e,index);
+      lookup_table = (byte *)((uint5)dVar14 >> 8);
       *lookup_table = bVar4;
-      uVar6 = CONCAT11(index,current_player_number);
+      uVar7 = CONCAT11(index,current_player_number);
       if ((cocktail_mode & current_player_number) != 0) {
         bVar2 = bVar2 ^ 0xc0;
       }
       lookup_table[-1] = bVar2;
-      pcVar9 = &animation_cmd_setn;
+      pcVar10 = &animation_cmd_setn;
       bVar2 = dereference_pointer_to_byte(&animation_cmd_setn,index);
-      *pcVar9 = bVar2 - 1;
-      sVar8 = 0;
+      *pcVar10 = bVar2 - 1;
+      sVar9 = 0;
       if ((byte)(bVar2 - 1) == '\0') {
-        sVar8 = 4;
+        sVar9 = 4;
       }
     }
     else {
       if (bVar2 == 0xf1) {
-        lookup_table_00 = (word *)animation_code_f0_and_f1_sub_stuff(uVar6);
-        uVar5 = CONCAT11(lookup_table[1],lookup_table[2]);
+        lookup_table_00 = (word *)animation_code_f0_and_f1_sub_stuff(uVar7);
+        uVar6 = CONCAT11(lookup_table[1],lookup_table[2]);
 intermissions_and_attract_mode_animation_main_routine_cleanup_for_return_from_f0_f1_f3:
-        dVar13 = dereference_pointer_to_word(lookup_table_00,(byte)(uVar6 >> 8));
-        puVar10 = (undefined *)((uint5)dVar13 >> 8);
-        *puVar10 = (char)((ushort)uVar5 >> 8);
-        puVar10[-1] = (char)uVar5;
-        sVar8 = 3;
+        dVar14 = dereference_pointer_to_word(lookup_table_00,(byte)(uVar7 >> 8));
+        puVar11 = (undefined *)((uint5)dVar14 >> 8);
+        *puVar11 = (char)((ushort)uVar6 >> 8);
+        puVar11[-1] = (char)uVar6;
+        sVar9 = 3;
       }
       else {
         if (bVar2 == 0xf2) {
-          uVar1 = uVar6 & 0xff00;
-          uVar6 = uVar1 | lookup_table[1];
-          puVar11 = &animation_cmd_setn;
+          uVar1 = uVar7 & 0xff00;
+          uVar7 = uVar1 | lookup_table[1];
+          puVar12 = &animation_cmd_setn;
           dereference_pointer_to_byte(&animation_cmd_setn,(byte)(uVar1 >> 8));
-          *puVar11 = (char)uVar6;
-          sVar8 = 2;
+          *puVar12 = (char)uVar7;
+          sVar9 = 2;
         }
         else {
           if (bVar2 == 0xf3) {
-            puVar10 = &DAT_ram_4f0f;
+            puVar11 = &DAT_ram_4f0f;
             dereference_pointer_to_byte(&DAT_ram_4f0f,index);
-            *puVar10 = 0;
+            *puVar11 = 0;
             lookup_table_00 = WORD_ARRAY_ram_4f3e;
-            uVar5 = *(undefined2 *)(lookup_table + 1);
+            uVar6 = *(undefined2 *)(lookup_table + 1);
             goto 
             intermissions_and_attract_mode_animation_main_routine_cleanup_for_return_from_f0_f1_f3;
           }
           if (bVar2 == 0xf5) {
             channel_3_effect.num = lookup_table[1];
-            sVar8 = 2;
+            sVar9 = 2;
           }
           else {
             if (bVar2 == 0xf6) {
-              pcVar9 = &animation_cmd_setn;
+              pcVar10 = &animation_cmd_setn;
               bVar2 = dereference_pointer_to_byte(&animation_cmd_setn,index);
-              *pcVar9 = bVar2 - 1;
-              sVar8 = 0;
+              *pcVar10 = bVar2 - 1;
+              sVar9 = 0;
               if ((byte)(bVar2 - 1) == '\0') {
-                sVar8 = 1;
+                sVar9 = 1;
               }
             }
             else {
               if (bVar2 == 0xf7) {
-                insert_task((word *)&draw_space);
-                return;
-              }
-              if (bVar2 == 0xf8) {
-                hardware_video_ram[684] = 0x40;
-                sVar8 = 1;
+                    // WARNING: Return address prevents inlining here
+                insert_task(&task_text_or_graphics_draw_space);
+                uVar7 = CONCAT11(index,uVar5);
+                sVar9 = 1;
               }
               else {
-                if (bVar2 != 0xff) {
-                  halt();
-                  goto intermissions_and_attract_mode_animation_main_routine_animation_code_F0_loop;
+                if (bVar2 == 0xf8) {
+                  hardware_screen_maze_area[22][4] = 0x40;
+                  sVar9 = 1;
                 }
-                puVar11 = &__stack_data_maybe_size_0x14;
-                dereference_pointer_to_byte(&__stack_data_maybe_size_0x14,index);
-                *puVar11 = 1;
-                sVar8 = 0;
-                if ((DAT_ram_4f20 & DAT_ram_4f21 & DAT_ram_4f22 & DAT_ram_4f23 & DAT_ram_4f24 &
-                    DAT_ram_4f25) != 0) {
-                  if (subroutine_DEMO_state == 0) {
-                    add_timed_task(&task_timed_t_ram_2196);
-                    subroutine_PLAYING_state = subroutine_PLAYING_state + 1;
+                else {
+                  if (bVar2 != 0xff) {
+                    halt();
+                    goto 
+                    intermissions_and_attract_mode_animation_main_routine_animation_code_F0_loop;
+                  }
+                  lookup_table = &__stack_data_maybe_size_0x14;
+                  dereference_pointer_to_byte(&__stack_data_maybe_size_0x14,index);
+                  *lookup_table = 1;
+                  sVar9 = 0;
+                  if ((BYTE_ram_4f20 & BYTE_ram_4f21 & BYTE_ram_4f22 & BYTE_ram_4f23 & BYTE_ram_4f24
+                      & BYTE_ram_4f25) != 0) {
+                    if (subroutine_DEMO_state == 0) {
+                    // WARNING: Return address prevents inlining here
+                      add_timed_task(&task_increase_subroutine_PLAYING_state);
+                      subroutine_PLAYING_state = subroutine_PLAYING_state + 1;
+                      return;
+                    }
+                    intermission_mode = false;
+                    TT02_increase_subroutine_DEMO_state();
                     return;
                   }
-                  intermission_mode = false;
-                  TT02_increase_subroutine_DEMO_state();
-                  return;
                 }
               }
             }
@@ -6563,12 +6871,12 @@ intermissions_and_attract_mode_animation_main_routine_cleanup_for_return_from_f0
         }
       }
     }
-    lookup_table = *ppbVar12;
-    *(char *)ppbVar12 = (char)(lookup_table + sVar8);
-    *(undefined *)((short)ppbVar12 + 1) = (char)((ushort)(lookup_table + sVar8) >> 8);
-    ppbVar12 = ppbVar12 + -1;
-    bVar2 = (char)(uVar6 >> 8) - 1;
-    uVar6 = uVar6 & 0xff | (ushort)bVar2 << 8;
+    lookup_table = *ppbVar13;
+    *(char *)ppbVar13 = (char)(lookup_table + sVar9);
+    *(undefined *)((short)ppbVar13 + 1) = (char)((ushort)(lookup_table + sVar9) >> 8);
+    ppbVar13 = ppbVar13 + -1;
+    bVar2 = (char)(uVar7 >> 8) - 1;
+    uVar7 = uVar7 & 0xff | (ushort)bVar2 << 8;
     if (bVar2 == 0) {
       return;
     }
@@ -6580,7 +6888,7 @@ intermissions_and_attract_mode_animation_main_routine_cleanup_for_return_from_f0
 void pacman_junk0(void)
 
 {
-  if (pacman_position.x == 0x21) {
+  if (pacman_position_tile_position.x == 0x21) {
     red_ghost_substate_if_alive = GOING_FOR_PACMAN;
     red_ghost_second_difficulty_flag = true;
     pacman_3rd_intermission_end();
@@ -6609,7 +6917,7 @@ void TT07_increase_state_in_1st_cutescene(void)
 void pacman_junk1(void)
 
 {
-  if (pacman_position.x == 0x1e) {
+  if (pacman_position_tile_position.x == 0x1e) {
     TT07_increase_state_in_1st_cutescene();
     return;
   }
@@ -6633,6 +6941,7 @@ void pacman_junk2(undefined2 param_1)
     pacman_used_during_attract_mode();
     pacman_orientation = wanted_pacman_orientation;
     pacman_XY_tile_changes_AB = param_1;
+                    // WARNING: Return address prevents inlining here
     add_timed_task((task_timed_t *)0x216a);
     TT07_increase_state_in_1st_cutescene();
     return;
@@ -6682,11 +6991,12 @@ void pacman_junk6(void)
 {
   handles_pacman_movement();
   handles_pacman_movement();
-  if ((byte)(pacman_position.x - 0x3d) != 0) {
+  if ((byte)(pacman_position_tile_position.x - 0x3d) != 0) {
     return;
   }
-  state_in_first_cutscene = pacman_position.x - 0x3d;
-  add_timed_task(&task_timed_t_ram_2196);
+  state_in_first_cutscene = pacman_position_tile_position.x - 0x3d;
+                    // WARNING: Return address prevents inlining here
+  add_timed_task(&task_increase_subroutine_PLAYING_state);
   subroutine_PLAYING_state = subroutine_PLAYING_state + 1;
   return;
 }
@@ -6707,14 +7017,15 @@ void state_for_2nd_intermission(void)
 void pacman_2nd_intermission_junk0(undefined *param_1)
 
 {
-  hardware_color_ram[466] = 1;
-  hardware_color_ram[467] = 1;
-  hardware_color_ram[498] = 1;
-  hardware_color_ram[499] = 1;
-  pacman_3rd_intermission_end(1);
+  BYTE_ARRAY_ARRAY_ram_4440[14][10] = 1;
+  BYTE_ARRAY_ARRAY_ram_4440[14][11] = 1;
+  BYTE_ARRAY_ARRAY_ram_4440[15][14] = 1;
+  BYTE_ARRAY_ARRAY_ram_4440[15][15] = 1;
+  pacman_3rd_intermission_end();
   *param_1 = 0x60;
   param_1[1] = 0x61;
-  add_timed_task((task_timed_t *)0x21dc);
+                    // WARNING: Return address prevents inlining here
+  add_timed_task(&task_increase_state_in_2nd_cutescene);
   TT08_increase_state_in_2nd_cutescene();
   return;
 }
@@ -6724,7 +7035,7 @@ void pacman_2nd_intermission_junk0(undefined *param_1)
 void pacman_2nd_intermission_junk2(void)
 
 {
-  if (pacman_position.x == 0x2c) {
+  if (pacman_position_tile_position.x == 0x2c) {
     red_ghost_substate_if_alive = GOING_FOR_PACMAN;
     red_ghost_second_difficulty_flag = true;
     state_in_second_cutscene = state_in_second_cutscene + 1;
@@ -6830,7 +7141,8 @@ void pacman_2nd_intermission_junk7(void)
 
 {
   if (red_ghost_coord.x == 0x80) {
-    add_timed_task(&task_timed_t_ram_2265);
+                    // WARNING: Return address prevents inlining here
+    add_timed_task(&task_increase_state_in_2nd_cutescene);
     TT08_increase_state_in_2nd_cutescene();
     return;
   }
@@ -6851,7 +7163,8 @@ void pacman_2nd_intermission_junk9(undefined *param_1)
   param_1[1] = 0x6d;
   param_1[0x20] = 0x40;
   param_1[0x21] = 0x40;
-  add_timed_task(&task_timed_t_ram_2280);
+                    // WARNING: Return address prevents inlining here
+  add_timed_task(&task_increase_state_in_2nd_cutescene);
   TT08_increase_state_in_2nd_cutescene();
   return;
 }
@@ -6861,7 +7174,8 @@ void pacman_2nd_intermission_junk9(undefined *param_1)
 void pacman_2nd_intermission_junk11(void)
 
 {
-  add_timed_task(&task_timed_t_ram_2287);
+                    // WARNING: Return address prevents inlining here
+  add_timed_task(&task_increase_state_in_2nd_cutescene);
   TT08_increase_state_in_2nd_cutescene();
   return;
 }
@@ -6915,7 +7229,8 @@ void pacman_3rd_intermission_junk0(void)
   red_ghost_coord.x = red_ghost_coord.x + 2;
   red_ghost_change_orientation_flag = true;
   is_reverse_red_ghost_direction_time();
-  add_timed_task((task_timed_t *)0x22d8);
+                    // WARNING: Return address prevents inlining here
+  add_timed_task(&task_increase_state_in_3rd_cutescene);
   TT09_increase_state_in_3rd_cutescene();
   return;
 }
@@ -6970,7 +7285,8 @@ void pacman_3rd_intermission_junk4(void)
                     // refereneced in line #22A5
                     // 
   state_in_third_cutscene = 0;
-  add_timed_task((task_timed_t *)0x2303);
+                    // WARNING: Return address prevents inlining here
+  add_timed_task(&task_increase_state_in_3rd_cutescene);
   subroutine_PLAYING_state = subroutine_PLAYING_state + 1;
   return;
 }
@@ -6985,16 +7301,16 @@ void startup_test(void)
 
 {
   ushort uVar1;
+  byte c;
   task_core_e index;
   char cVar2;
   byte n;
-  byte c;
   in0_t *piVar3;
-  byte *pbVar4;
-  hardware_floating_sprite_t *s;
+  byte *s;
   
   piVar3 = &hardware_IN0;
   cVar2 = '\b';
+  c = 0;
   do {
     *piVar3 = (in0_t)0x0;
     piVar3 = (in0_t *)((ushort)piVar3 & 0xff00 | (ushort)(byte)((char)piVar3 + 1));
@@ -7003,29 +7319,35 @@ void startup_test(void)
                     //  Clear screen
                     //  40 -> 4000-43ff (Video RAM)
                     // 
-  pbVar4 = hardware_video_ram;
+  s = hardware_video_ram;
   cVar2 = '\x04';
   do {
+    write_volatile_1(hardware_DSW2_watchdog,c);
+    write_volatile_1(hardware_coin_counter,c);
+    c = space;
     do {
-      *pbVar4 = space;
-      c = (char)pbVar4 + 1;
-      uVar1 = (ushort)pbVar4 & 0xff00;
-      pbVar4 = (byte *)(uVar1 | c);
-    } while (c != 0);
-    pbVar4 = (byte *)((ushort)(byte)((char)(uVar1 >> 8) + 1) << 8);
+      *s = space;
+      n = (char)s + 1;
+      uVar1 = (ushort)s & 0xff00;
+      s = (byte *)(uVar1 | n);
+    } while (n != 0);
+    s = (byte *)((ushort)(byte)((char)(uVar1 >> 8) + 1) << 8);
     cVar2 = cVar2 + -1;
   } while (cVar2 != '\0');
                     //  0f -> 4400 - 47ff (Color RAM)
                     // 
   cVar2 = '\x04';
   do {
+    write_volatile_1(hardware_DSW2_watchdog,c);
+    write_volatile_1(hardware_coin_counter,0);
+    c = color_reset_maybe_black;
     do {
-      *pbVar4 = color_reset_maybe_black;
-      c = (char)pbVar4 + 1;
-      uVar1 = (ushort)pbVar4 & 0xff00;
-      pbVar4 = (byte *)(uVar1 | c);
-    } while (c != 0);
-    pbVar4 = (byte *)((ushort)(byte)((char)(uVar1 >> 8) + 1) << 8);
+      *s = color_reset_maybe_black;
+      n = (char)s + 1;
+      uVar1 = (ushort)s & 0xff00;
+      s = (byte *)(uVar1 | n);
+    } while (n != 0);
+    s = (byte *)((ushort)(byte)((char)(uVar1 >> 8) + 1) << 8);
     cVar2 = cVar2 + -1;
   } while (cVar2 != '\0');
                     //  test the interrupt hardware now
@@ -7039,61 +7361,98 @@ void startup_test(void)
                     // interrupt vector -> 0xfa #3ffa vector to #3000
                     // see also "INTERRUPT MODE 2" above...
                     // 
-  hardware_coin_counter = 0;
+  write_volatile_1(hardware_coin_counter,0);
   hardware_IN0 = (in0_t)0x1;
   enableMaskableInterrupts();
   halt();
                     //  main program init
                     //  perhaps a contiuation from 3295
                     // 
-  hardware_DSW2_watchdog = 1;
+  write_volatile_1(hardware_DSW2_watchdog,1);
                     //  reset custom registers.  Set them to 0
                     // 
   c = 0;
-  ARRAY_ram_4f5c._98_2_ = (undefined *)0x2359;
+  ARRAY_ram_4f5c._98_2_ = 0x2359;
   memset((byte *)&hardware_IN0,0,8);
                     //  clear ram
                     // 
-  s = &start_of_sprites_address;
   n = 0xbe;
-  ARRAY_ram_4f5c._98_2_ = (undefined *)0x235f;
-  memset((byte *)&start_of_sprites_address,c,0xbe);
-  ARRAY_ram_4f5c._98_2_ = (undefined *)0x2360;
-  memset((byte *)s,c,n);
-  ARRAY_ram_4f5c._98_2_ = (undefined *)0x2361;
-  memset((byte *)s,c,n);
-  ARRAY_ram_4f5c._98_2_ = (undefined *)0x2362;
-  memset((byte *)s,c,n);
+  ARRAY_ram_4f5c._98_2_ = 0x235f;
+  s = (byte *)memset((byte *)&start_of_sprites_address,c,0xbe);
+  ARRAY_ram_4f5c._98_2_ = 0x2360;
+  s = (byte *)memset(s,c,n);
+  ARRAY_ram_4f5c._98_2_ = 0x2361;
+  s = (byte *)memset(s,c,n);
+  ARRAY_ram_4f5c._98_2_ = 0x2362;
+  memset(s,c,n);
                     //  clear sound registers, color ram, screen, task list
                     // 
-  ARRAY_ram_4f5c._98_2_ = (undefined *)0x2368;
+  ARRAY_ram_4f5c._98_2_ = 0x2368;
   memset((byte *)&hardware_IN1,c,0x40);
-  ARRAY_ram_4f5c._98_2_ = (undefined *)0x236e;
-  hardware_DSW2_watchdog = c;
-  hardware_DSW2_watchdog = T06_clears_color_RAM();
-  ARRAY_ram_4f5c._98_2_ = (undefined *)0x2376;
-  hardware_DSW2_watchdog = T00_clear_whole_screen_or_maze(0);
-  p_task_list_next_free = task_list;
-  p_task_list_begin = task_list;
-  ARRAY_ram_4f5c._98_2_ = (undefined *)0x2387;
-  memset((byte *)task_list,0xff,0x40);
+  write_volatile_1(hardware_DSW2_watchdog,c);
+  ARRAY_ram_4f5c._98_2_ = 0x236e;
+  c = T06_clears_color_RAM();
+  write_volatile_1(hardware_DSW2_watchdog,c);
+  ARRAY_ram_4f5c._98_2_ = 0x2376;
+  c = T00_clear_whole_screen_or_maze(0);
+  write_volatile_1(hardware_DSW2_watchdog,c);
+  p_task_list_next_free = tasks_to_execute_outside_of_irq;
+  p_task_list_begin = tasks_to_execute_outside_of_irq;
+  ARRAY_ram_4f5c._98_2_ = 0x2387;
+  memset((byte *)tasks_to_execute_outside_of_irq,0xff,0x40);
   hardware_IN0 = (in0_t)0x1;
   enableMaskableInterrupts();
+  s = _STACK_END;
   do {
-    index = p_task_list_begin->value;
-  } while ((char)index < '\0');
-  p_task_list_begin->value = ~clear_whole_screen_or_maze;
-  uVar1 = (ushort)p_task_list_begin & 0xff00;
-  *(undefined *)(uVar1 | (byte)((char)p_task_list_begin + 1)) = 0xff;
-  c = (char)p_task_list_begin + 2;
-  p_task_list_begin = (task_core_t *)(uVar1 | c);
-  if (c == 0) {
-    p_task_list_begin = (task_core_t *)CONCAT11((char)(uVar1 >> 8),0xc0);
-  }
-  ARRAY_ram_4f5c._98_2_ = &execute_CORE_task;
-  ARRAY_ram_4f5c._96_2_ = core_fn_table;
-  jump_table((undefined *)core_fn_table,index);
-  return;
+    do {
+      index = p_task_list_begin->value;
+    } while ((char)index < '\0');
+    p_task_list_begin->value = ~clear_whole_screen_or_maze;
+    uVar1 = (ushort)p_task_list_begin & 0xff00;
+    *(undefined *)(uVar1 | (byte)((char)p_task_list_begin + 1)) = 0xff;
+    c = (char)p_task_list_begin + 2;
+    p_task_list_begin = (task_core_t *)(uVar1 | c);
+    if (c == 0) {
+      p_task_list_begin = (task_core_t *)CONCAT11((char)(uVar1 >> 8),0xc0);
+    }
+    *(undefined2 *)(s + -2) = 0x238d;
+                    // WARNING: Return address prevents inlining here
+    *(undefined2 *)(s + -4) = 0x23a8;
+    jump_table_fn(*(undefined **)(s + -4),index);
+    s = s + -2;
+  } while( true );
+}
+
+
+
+// process the task list, a core game loop
+// 
+
+void execute_CORE_task(void)
+
+{
+  ushort uVar1;
+  task_core_e index;
+  byte bVar2;
+  
+  do {
+    do {
+      index = p_task_list_begin->value;
+    } while ((char)index < '\0');
+    p_task_list_begin->value = ~clear_whole_screen_or_maze;
+    uVar1 = (ushort)p_task_list_begin & 0xff00;
+    *(undefined *)(uVar1 | (byte)((char)p_task_list_begin + 1)) = 0xff;
+    bVar2 = (char)p_task_list_begin + 2;
+    p_task_list_begin = (task_core_t *)(uVar1 | bVar2);
+    if (bVar2 == 0) {
+      p_task_list_begin = (task_core_t *)CONCAT11((char)(uVar1 >> 8),0xc0);
+    }
+    *(undefined2 *)((undefined *)register0x44 + -2) = 0x238d;
+                    // WARNING: Return address prevents inlining here
+    *(undefined2 *)((undefined *)register0x44 + -4) = 0x23a8;
+    jump_table_fn(*(undefined **)((undefined *)register0x44 + -4),index);
+    register0x44 = (BADSPACEBASE *)((undefined *)register0x44 + -2);
+  } while( true );
 }
 
 
@@ -7112,7 +7471,8 @@ void T16_increase_main_subroutine_number(void)
 void T00_clear_whole_screen_or_maze(byte param)
 
 {
-  jump_table((undefined *)clear_fn_table,param);
+                    // WARNING: Return address prevents inlining here
+  jump_table_fn((undefined *)clear_fn_table,param);
   return;
 }
 
@@ -7131,7 +7491,7 @@ void clear_hardware_video_ram(void)
   n = 0;
   s = hardware_video_ram;
   do {
-    memset(s,c,n);
+    s = (byte *)memset(s,c,n);
     cVar1 = cVar1 + -1;
   } while (cVar1 != '\0');
   return;
@@ -7150,11 +7510,11 @@ void clear_hardware_video_maze_only(void)
   byte *s;
   
   c = space;
-  s = hardware_video_ram + 0x40;
+  s = hardware_screen_maze_area;
   cVar1 = '\x04';
   n = 0x80;
   do {
-    memset(s,c,n);
+    s = (byte *)memset(s,c,n);
     cVar1 = cVar1 + -1;
   } while (cVar1 != '\0');
   return;
@@ -7177,7 +7537,7 @@ void T06_clears_color_RAM(void)
   n = 0;
   s = hardware_color_ram;
   do {
-    memset(s,c,n);
+    s = (byte *)memset(s,c,n);
     cVar1 = cVar1 + -1;
   } while (cVar1 != '\0');
   return;
@@ -7251,8 +7611,7 @@ void T12_clears_pills_and_power_pills_arrays(void)
 {
   byte *s;
   
-  s = pill_data_entries;
-  memset(pill_data_entries,0xff,0x1e);
+  s = (byte *)memset(pill_data_entries,0xff,0x1e);
   memset(s,0x14,4);
   return;
 }
@@ -7295,14 +7654,14 @@ void T01_select_maze_color(undefined2 param_1)
   }
                     // arrive back here from ms pac patch
                     // 
-  s = hardware_color_ram + 0x40;
+  s = BYTE_ARRAY_ARRAY_ram_4440;
   cVar2 = '\x04';
   n = 0x80;
   do {
-    memset(s,c,n);
+    s = (byte *)memset(s,c,n);
     cVar2 = cVar2 + -1;
   } while (cVar2 != '\0');
-  memset(hardware_color_ram + 0x3c0,0xf,0x40);
+  memset(BYTE_ARRAY_ARRAY_ram_47c0,0xf,0x40);
   if (cVar3 != '\x01') {
     return;
   }
@@ -7328,8 +7687,8 @@ void T01_select_maze_color(undefined2 param_1)
   }
                     // ms. pac resumes here
                     // 
-  hardware_color_ram[493] = 0x18;
-  hardware_color_ram[525] = 0x18;
+  BYTE_ARRAY_ARRAY_ram_4440[15][9] = 0x18;
+  BYTE_ARRAY_ARRAY_ram_4440[16][13] = 0x18;
   return;
 }
 
@@ -7347,13 +7706,13 @@ void T04_reset_sprites_to_default_values(undefined2 param_1)
                     // 
   red_ghost_sprite._0_1_ = 0x20;
   pink_ghost_sprite._0_1_ = 0x20;
-  inky_sprite._0_1_ = 0x20;
+  blue_sprite._0_1_ = 0x20;
   orange_ghost_sprite._0_1_ = 0x20;
   mspac_sprite._0_1_ = 0x2c;
   fruit_sprite._0_1_ = 0x3f;
   red_ghost_sprite.color = red;
   pink_ghost_sprite.color = pink;
-  inky_sprite.color = inky;
+  blue_sprite.color = inky;
   orange_ghost_sprite.color = orange_and_color_maze_level_10_11_12_13;
   mspac_sprite.color = mspac;
   fruit_sprite.color = fruit;
@@ -7362,8 +7721,8 @@ void T04_reset_sprites_to_default_values(undefined2 param_1)
     red_ghost_sprite.color = red;
     pink_ghost_sprite._0_1_ = 0x20;
     pink_ghost_sprite.color = pink;
-    inky_sprite._0_1_ = 0x20;
-    inky_sprite.color = inky;
+    blue_sprite._0_1_ = 0x20;
+    blue_sprite.color = inky;
     orange_ghost_sprite._0_1_ = 0x20;
     orange_ghost_sprite.color = orange_and_color_maze_level_10_11_12_13;
     mspac_sprite._0_1_ = 0x2c;
@@ -7399,7 +7758,7 @@ void T04_reset_sprites_to_default_values(undefined2 param_1)
     pink_ghost_tile_position_2 = 0x2e2f;
     blue_ghost_tile_position_2 = 0x302f;
     orange_ghost_tile_position_2 = 0x2c2f;
-    pacman_position = 0x2e38;
+    pacman_position_tile_position = 0x2e38;
     wanted_pacman_orientation = left;
     fruit_coord = 0;
     return;
@@ -7432,7 +7791,7 @@ void T04_reset_sprites_to_default_values(undefined2 param_1)
   memset(&red_ghost_previous_orientation,2,9);
   pacman_coord = TT00_increase_subroutine_PLAYING_state;
   pacman_tile_pos_in_demo_and_cut_scenes = 0x1f32;
-  pacman_position = 0x1f32;
+  pacman_position_tile_position = 0x1f32;
   wanted_pacman_orientation = cVar1;
   return;
 }
@@ -7502,15 +7861,15 @@ void T07_set_game_to_demo_mode(void)
 void T11_clear_full_data_game(void)
 
 {
-  tile_coord_yx_t *ptVar1;
+  sprite_coord_yx_t *psVar1;
   
                     // task #11 called from #23A7
                     // 
-  ptVar1 = &red_ghost_coord;
+  psVar1 = &red_ghost_coord;
   do {
-    ptVar1->y = 0;
-    ptVar1 = (tile_coord_yx_t *)&ptVar1->x;
-  } while (ptVar1 != (tile_coord_yx_t *)&game_mode);
+    psVar1->y = 0;
+    psVar1 = (sprite_coord_yx_t *)&psVar1->x;
+  } while (psVar1 != (sprite_coord_yx_t *)&game_mode);
   return;
 }
 
@@ -7523,11 +7882,11 @@ void T11_clear_full_data_game(void)
 void T1F_draw_extra_life_points(void)
 
 {
-  hardware_video_ram[310] = (bonus_life & 0xf) + 0x30;
+  hardware_screen_maze_area[8][22] = (bonus_life & 0xf) + 0x30;
   if (bonus_life >> 4 == 0) {
     return;
   }
-  hardware_video_ram[342] = (bonus_life >> 4) + 0x30;
+  hardware_screen_maze_area[9][26] = (bonus_life >> 4) + 0x30;
   return;
 }
 
@@ -7537,38 +7896,39 @@ void T14_setup_config_from_dip_switches(void)
 
 {
   byte bVar1;
-  dereference_word_t dVar2;
+  byte bVar2;
+  dereference_word_t dVar3;
   
                     // check dip switches 0 and 1 .  Free play or coins per credit
                     // 
-  number_of_credits_per_coin = hardware_DSW1 & 3;
+  bVar2 = read_volatile_1(hardware_DSW1);
+  number_of_credits_per_coin = bVar2 & 3;
   if (number_of_credits_per_coin == 0) {
     number_of_credits_xff_for_free_play = 0xff;
   }
-  number_of_coins_per_credit = (number_of_credits_per_coin >> 1) + (hardware_DSW1 & 1);
+  number_of_coins_per_credit = (number_of_credits_per_coin >> 1) + (bVar2 & 1);
   number_of_credits_per_coin = number_of_coins_per_credit & 2 ^ number_of_credits_per_coin;
                     // check dip switches 2 and 3.  number of starting lives per game
                     // 
-  bVar1 = hardware_DSW1 >> 2 & 3;
+  bVar1 = bVar2 >> 2 & 3;
   number_of_lives = bVar1 + 1;
   if (number_of_lives == 4) {
     number_of_lives = bVar1 + 2;
   }
                     // check dip switches 4 and 5.  points for bonus pac man
                     // 
-  bVar1 = hardware_DSW1;
-  bonus_life = dereference_pointer_to_byte(&bonus_points_option,hardware_DSW1 >> 4 & 3);
+  bonus_life = dereference_pointer_to_byte(&bonus_points_option,bVar2 >> 4 & 3);
                     // check dip switch 7 for ghost names during attract mode
                     // 
-  ghost_names_mode = (bool)(~(bVar1 >> 7) & 1);
+  ghost_names_mode = (bool)(~(bVar2 >> 7) & 1);
                     // check dip switch 6 for difficulty
                     // 
-  dVar2 = dereference_pointer_to_word
-                    ((word *)&difficulty_settings_lookup_table,~((bVar1 << 1) >> 7) & 1);
+  dVar3 = dereference_pointer_to_word
+                    ((word *)&difficulty_settings_lookup_table,~((bVar2 << 1) >> 7) & 1);
                     // check bit 7 on IN1 for upright / cocktail
                     // 
   cocktail_mode = (bool)(~((byte)hardware_IN1 >> 7) & 1);
-  p_difficulty_settings = (undefined *)((uint5)dVar2 >> 0x18);
+  p_difficulty_settings = (undefined *)((uint5)dVar3 >> 0x18);
   return;
 }
 
@@ -7580,8 +7940,8 @@ void T08_red_ghost_AI(void)
 
 {
   character_orientation_e orientation;
-  tile_coord_yx_t destination_tile;
-  tile_coord_yx_t current_position_tile;
+  sprite_coord_yx_t destination_tile;
+  sprite_coord_yx_t current_position_tile;
   undefined3 uVar1;
   
   if ((((counter__orientation_changes_index & 1) == 0) && (red_ghost_first_difficulty_flag == false)
@@ -7594,7 +7954,7 @@ void T08_red_ghost_AI(void)
                     // ;PATCH TO MAKE THE MONSTERS MOVE RANDOMLY
                     // ORG 274BH
                     // CALL RCORNER
-    destination_tile = (tile_coord_yx_t)pick_quadrant();
+    destination_tile = (sprite_coord_yx_t)pick_quadrant();
     uVar1 = distance_check(current_position_tile,destination_tile,orientation);
     red_ghost_xy_tile_changes = (short)uVar1;
     red_ghost_orientation = (character_orientation_e)((uint3)uVar1 >> 0x10);
@@ -7602,7 +7962,7 @@ void T08_red_ghost_AI(void)
   }
                     // normal movement get direction for red ghost
                     // 
-  uVar1 = distance_check(red_ghost_xy_tile_pos,pacman_position,red_ghost_orientation);
+  uVar1 = distance_check(red_ghost_xy_tile_pos,pacman_position_tile_position,red_ghost_orientation);
   red_ghost_xy_tile_changes = (short)uVar1;
   red_ghost_orientation = (character_orientation_e)((uint3)uVar1 >> 0x10);
   return;
@@ -7616,8 +7976,8 @@ void T09_pink_ghost_AI(void)
 
 {
   character_orientation_e orientation;
-  tile_coord_yx_t destination_tile;
-  tile_coord_yx_t current_position_tile;
+  sprite_coord_yx_t destination_tile;
+  sprite_coord_yx_t current_position_tile;
   undefined3 uVar1;
   
   if (((counter__orientation_changes_index & 1) == 0) && (subroutine_PLAYING_state == GHOST_MOVE)) {
@@ -7625,7 +7985,7 @@ void T09_pink_ghost_AI(void)
     current_position_tile = pink_ghost_xy_tile_pos;
                     // pink ghost random movement
                     // 
-    destination_tile = (tile_coord_yx_t)pick_quadrant();
+    destination_tile = (sprite_coord_yx_t)pick_quadrant();
     uVar1 = distance_check(current_position_tile,destination_tile,orientation);
     pink_ghost_xy_tile_changes = (short)uVar1;
     pink_ghost_orientation = (character_orientation_e)((uint3)uVar1 >> 0x10);
@@ -7637,7 +7997,8 @@ void T09_pink_ghost_AI(void)
                     // 2795  00        nop
                     // 
   uVar1 = distance_check(pink_ghost_xy_tile_pos,
-                         (tile_coord_yx_t)(pacman_XY_tile_changes_AB * 4 + pacman_position),
+                         (sprite_coord_yx_t)
+                         (pacman_XY_tile_changes_AB * 4 + pacman_position_tile_position),
                          pink_ghost_orientation);
   pink_ghost_xy_tile_changes = (short)uVar1;
   pink_ghost_orientation = (character_orientation_e)((uint3)uVar1 >> 0x10);
@@ -7653,7 +8014,7 @@ void T0A_blue_ghost_AI(void)
 
 {
   character_orientation_e orientation;
-  tile_coord_yx_t current_position_tile;
+  sprite_coord_yx_t current_position_tile;
   short sVar1;
   undefined3 uVar2;
   
@@ -7662,7 +8023,7 @@ void T0A_blue_ghost_AI(void)
                     // random (?) blue ghost (inky) movement
                     // 
     orientation = pick_quadrant_for_blue_ghost_direction();
-    uVar2 = distance_check(current_position_tile,(tile_coord_yx_t)0x2040,orientation);
+    uVar2 = distance_check(current_position_tile,(sprite_coord_yx_t)0x2040,orientation);
     blue_ghost_xy_tile_changes = (short)uVar2;
     blue_ghost_orientation = (character_orientation_e)((uint3)uVar2 >> 0x10);
     return;
@@ -7672,9 +8033,9 @@ void T0A_blue_ghost_AI(void)
                     // H loads with (0 = facing up or down, 01 = facing left, FF = facing right)
                     // L loads with (0= facing left or right, 01 = facing down, FF = facing up)
                     // 
-  sVar1 = pacman_XY_tile_changes_AB * 2 + pacman_position;
+  sVar1 = pacman_XY_tile_changes_AB * 2 + pacman_position_tile_position;
   uVar2 = distance_check(blue_ghost_xy_tile_pos,
-                         (tile_coord_yx_t)
+                         (sprite_coord_yx_t)
                          CONCAT11((char)((ushort)sVar1 >> 8) * '\x02' -
                                   (char)((ushort)red_ghost_xy_tile_pos >> 8),
                                   (char)sVar1 * '\x02' - (char)red_ghost_xy_tile_pos),
@@ -7690,16 +8051,17 @@ void T0B_orange_ghost_AI(void)
 
 {
   character_orientation_e orientation;
-  tile_coord_yx_t current_position_tile;
+  sprite_coord_yx_t current_position_tile;
   word wVar1;
   undefined3 uVar2;
   
   orientation = counter__orientation_changes_index;
   if (((counter__orientation_changes_index & 1) != 0) ||
      (orientation = subroutine_PLAYING_state, subroutine_PLAYING_state != GHOST_MOVE)) {
-    wVar1 = get_distance(&orange_ghost_xy_tile_pos,&pacman_position);
+    wVar1 = get_distance(&orange_ghost_xy_tile_pos,&pacman_position_tile_position);
     if (0x3f < wVar1) {
-      uVar2 = distance_check(orange_ghost_xy_tile_pos,pacman_position,orange_ghost_orientation);
+      uVar2 = distance_check(orange_ghost_xy_tile_pos,pacman_position_tile_position,
+                             orange_ghost_orientation);
       orange_ghost_xy_tile_changes = (short)uVar2;
       orange_ghost_orientation = (character_orientation_e)((uint3)uVar2 >> 0x10);
       return;
@@ -7707,8 +8069,8 @@ void T0B_orange_ghost_AI(void)
   }
   current_position_tile = orange_ghost_xy_tile_pos;
   pick_quadrant_for_orange_ghost_direction();
-  uVar2 = distance_check(current_position_tile,(tile_coord_yx_t)channel_2_height_effects,orientation
-                        );
+  uVar2 = distance_check(current_position_tile,(sprite_coord_yx_t)channel_2_height_effects,
+                         orientation);
   orange_ghost_xy_tile_changes = (short)uVar2;
   orange_ghost_orientation = (character_orientation_e)((uint3)uVar2 >> 0x10);
   return;
@@ -7723,18 +8085,18 @@ void T0B_orange_ghost_AI(void)
 void T0C_red_ghost_movement_when_power_pill(void)
 
 {
-  tile_coord_yx_t tVar1;
+  sprite_coord_yx_t sVar1;
   undefined3 uVar2;
   
   if (red_ghost_state != ALIVE) {
-    uVar2 = distance_check(red_ghost_xy_tile_pos,(tile_coord_yx_t)0x2e2c,red_ghost_orientation);
-    red_ghost_xy_tile_changes = (tile_coord_yx_t)(short)uVar2;
+    uVar2 = distance_check(red_ghost_xy_tile_pos,(sprite_coord_yx_t)0x2e2c,red_ghost_orientation);
+    red_ghost_xy_tile_changes = (sprite_coord_yx_t)(short)uVar2;
     red_ghost_orientation = (character_orientation_e)((uint3)uVar2 >> 0x10);
     return;
   }
-  tVar1 = red_ghost_xy_tile_pos;
+  sVar1 = red_ghost_xy_tile_pos;
   red_ghost_orientation = get_best_orientation(red_ghost_orientation,red_ghost_xy_tile_pos);
-  red_ghost_xy_tile_changes = tVar1;
+  red_ghost_xy_tile_changes = sVar1;
   return;
 }
 
@@ -7747,18 +8109,18 @@ void T0C_red_ghost_movement_when_power_pill(void)
 void T0D_pink_ghost_movement_when_power_pill(void)
 
 {
-  tile_coord_yx_t tVar1;
+  sprite_coord_yx_t sVar1;
   undefined3 uVar2;
   
   if (pink_ghost_state != ALIVE) {
-    uVar2 = distance_check(pink_ghost_xy_tile_pos,(tile_coord_yx_t)0x2e2c,pink_ghost_orientation);
-    pink_ghost_xy_tile_changes = (tile_coord_yx_t)(short)uVar2;
+    uVar2 = distance_check(pink_ghost_xy_tile_pos,(sprite_coord_yx_t)0x2e2c,pink_ghost_orientation);
+    pink_ghost_xy_tile_changes = (sprite_coord_yx_t)(short)uVar2;
     pink_ghost_orientation = (character_orientation_e)((uint3)uVar2 >> 0x10);
     return;
   }
-  tVar1 = pink_ghost_xy_tile_pos;
+  sVar1 = pink_ghost_xy_tile_pos;
   pink_ghost_orientation = get_best_orientation(pink_ghost_orientation,pink_ghost_xy_tile_pos);
-  pink_ghost_xy_tile_changes = tVar1;
+  pink_ghost_xy_tile_changes = sVar1;
   return;
 }
 
@@ -7767,20 +8129,20 @@ void T0D_pink_ghost_movement_when_power_pill(void)
 void T0E_blue_ghost_movement_when_power_pill(void)
 
 {
-  tile_coord_yx_t tVar1;
+  sprite_coord_yx_t sVar1;
   undefined3 uVar2;
   
                     // check blue ghost (inky)
                     // 
   if (blue_ghost_state != ALIVE) {
-    uVar2 = distance_check(blue_ghost_xy_tile_pos,(tile_coord_yx_t)0x2e2c,blue_ghost_orientation);
-    blue_ghost_xy_tile_changes = (tile_coord_yx_t)(short)uVar2;
+    uVar2 = distance_check(blue_ghost_xy_tile_pos,(sprite_coord_yx_t)0x2e2c,blue_ghost_orientation);
+    blue_ghost_xy_tile_changes = (sprite_coord_yx_t)(short)uVar2;
     blue_ghost_orientation = (character_orientation_e)((uint3)uVar2 >> 0x10);
     return;
   }
-  tVar1 = blue_ghost_xy_tile_pos;
+  sVar1 = blue_ghost_xy_tile_pos;
   blue_ghost_orientation = get_best_orientation(blue_ghost_orientation,blue_ghost_xy_tile_pos);
-  blue_ghost_xy_tile_changes = tVar1;
+  blue_ghost_xy_tile_changes = sVar1;
   return;
 }
 
@@ -7789,22 +8151,22 @@ void T0E_blue_ghost_movement_when_power_pill(void)
 void T0F_orange_ghost_movement_when_power_pill(void)
 
 {
-  tile_coord_yx_t tVar1;
+  sprite_coord_yx_t sVar1;
   undefined3 uVar2;
   
                     // check orange ghost
                     // 
   if (orange_ghost_state != ALIVE) {
-    uVar2 = distance_check(orange_ghost_xy_tile_pos,(tile_coord_yx_t)0x2e2c,orange_ghost_orientation
-                          );
-    orange_ghost_xy_tile_changes = (tile_coord_yx_t)(short)uVar2;
+    uVar2 = distance_check(orange_ghost_xy_tile_pos,(sprite_coord_yx_t)0x2e2c,
+                           orange_ghost_orientation);
+    orange_ghost_xy_tile_changes = (sprite_coord_yx_t)(short)uVar2;
     orange_ghost_orientation = (character_orientation_e)((uint3)uVar2 >> 0x10);
     return;
   }
-  tVar1 = orange_ghost_xy_tile_pos;
+  sVar1 = orange_ghost_xy_tile_pos;
   orange_ghost_orientation = get_best_orientation(orange_ghost_orientation,orange_ghost_xy_tile_pos)
   ;
-  orange_ghost_xy_tile_changes = tVar1;
+  orange_ghost_xy_tile_changes = sVar1;
   return;
 }
 
@@ -7831,11 +8193,11 @@ void T17_pacman_AI_movement_when_demo(void)
                     // pacman will run away from pink ghost
                     // 
   uVar1 = distance_check(pacman_tile_pos_in_demo_and_cut_scenes,
-                         (tile_coord_yx_t)
-                         CONCAT11((char)((ushort)pacman_position >> 8) * '\x02' -
+                         (sprite_coord_yx_t)
+                         CONCAT11((char)((ushort)pacman_position_tile_position >> 8) * '\x02' -
                                   (char)((ushort)pink_ghost_xy_tile_pos >> 8),
-                                  (char)pacman_position * '\x02' - SUB21(pink_ghost_xy_tile_pos,0)),
-                         wanted_pacman_orientation);
+                                  (char)pacman_position_tile_position * '\x02' -
+                                  SUB21(pink_ghost_xy_tile_pos,0)),wanted_pacman_orientation);
   wanted_pacman_tile_changes = (short)uVar1;
   wanted_pacman_orientation = (character_orientation_e)((uint3)uVar1 >> 0x10);
   return;
@@ -7849,18 +8211,18 @@ void T17_pacman_AI_movement_when_demo(void)
 // 
 
 character_orientation_e
-get_best_orientation(character_orientation_e current_orientation,tile_coord_yx_t ghost_position)
+get_best_orientation(character_orientation_e current_orientation,sprite_coord_yx_t ghost_position)
 
 {
   byte rnd;
-  tile_coord_yx_t *seek_location;
-  tile_coord_yx_t *ghost_location;
+  sprite_coord_yx_t *seek_location;
+  sprite_coord_yx_t *ghost_location;
   
   opposite_orientation = current_orientation ^ 2;
   current_tile_position = ghost_position;
   rnd = random();
   best_orientation_found = rnd & 3;
-  seek_location = (tile_coord_yx_t *)(&move_right.y + (byte)(best_orientation_found * '\x02'));
+  seek_location = (sprite_coord_yx_t *)(&move_right.y + (byte)(best_orientation_found * '\x02'));
   ghost_location = &current_tile_position;
   do {
     if (opposite_orientation != best_orientation_found) {
@@ -7887,14 +8249,14 @@ get_best_orientation(character_orientation_e current_orientation,tile_coord_yx_t
 // and the best new tile changes stored into HL
 // 
 
-uint3 distance_check(tile_coord_yx_t current_position_tile,tile_coord_yx_t destination_tile,
+uint3 distance_check(sprite_coord_yx_t current_position_tile,sprite_coord_yx_t destination_tile,
                     character_orientation_e orientation)
 
 {
   byte *pbVar1;
   word wVar2;
-  tile_coord_yx_t *seek_location;
-  tile_coord_yx_t *sprite_location;
+  sprite_coord_yx_t *seek_location;
+  sprite_coord_yx_t *sprite_location;
   
   opposite_orientation = orientation ^ 2;
   minimum_distance_square_found = 0xffff;
@@ -7930,7 +8292,7 @@ uint3 distance_check(tile_coord_yx_t current_position_tile,tile_coord_yx_t desti
 // loads HL with the sum of the square of the X and Y distances between pac and ghost
 // 
 
-word get_distance(tile_coord_yx_t *ghost_position,tile_coord_yx_t *pacman_position)
+word get_distance(sprite_coord_yx_t *ghost_position,sprite_coord_yx_t *pacman_position)
 
 {
   byte ghost_x_or_y_coord;
@@ -8006,8 +8368,8 @@ void T13_clears_sprites(void)
   byte bVar1;
   byte *pbVar2;
   
-  pbVar2 = hardware_video_ram + 0x40;
-  while (pbVar2 != hardware_video_ram + 0x3c0) {
+  pbVar2 = hardware_screen_maze_area;
+  while (pbVar2 != sprites_related_stuff2) {
     bVar1 = *pbVar2;
     if (((bVar1 == 0x10) || (bVar1 == 0x12)) || (bVar1 == 0x14)) {
       *pbVar2 = 0x40;
@@ -8585,9 +8947,9 @@ void T1D_draw_credit_qty(undefined param_1)
   }
   DrawText(CREDIT);
   if ((number_of_credits_xff_for_free_play & 0xf0) != 0) {
-    hardware_video_ram[52] = (number_of_credits_xff_for_free_play >> 4) + 0x30;
+    hardware_video_ram[1][20] = (number_of_credits_xff_for_free_play >> 4) + 0x30;
   }
-  hardware_video_ram[51] = (number_of_credits_xff_for_free_play & 0xf) + 0x30;
+  hardware_video_ram[1][19] = (number_of_credits_xff_for_free_play & 0xf) + 0x30;
   return;
 }
 
@@ -9162,14 +9524,17 @@ byte process_wave_one_voice
       index = wave_table->duration - 1;
       wave_table->duration = index;
       if (index == 0) {
-        index = *wave_table->next_byte;
-        pbVar3 = wave_table->next_byte + 1;
-        *(char *)&wave_table->next_byte = (char)pbVar3;
-        *(undefined *)((short)&wave_table->next_byte + 1) = (char)((ushort)pbVar3 >> 8);
-        if (0xef < index) {
-          index = index & 0xf;
-          jump_table((undefined *)wave_cmd_fn_table,index);
-          return index;
+        while( true ) {
+          index = *wave_table->next_byte;
+          pbVar3 = wave_table->next_byte + 1;
+          *(char *)&wave_table->next_byte = (char)pbVar3;
+          *(undefined *)((short)&wave_table->next_byte + 1) = (char)((ushort)pbVar3 >> 8);
+          if (index < 0xf0) break;
+          *(undefined2 *)((undefined *)register0x44 + -2) = 0x2d6c;
+                    // WARNING: Return address prevents inlining here
+          *(undefined2 *)((undefined *)register0x44 + -4) = 0x2d85;
+          jump_table_fn(*(undefined **)((undefined *)register0x44 + -4),index & 0xf);
+          register0x44 = (BADSPACEBASE *)((undefined *)register0x44 + -2);
         }
         if ((index & 0x1f) != 0) {
           wave_table->dir = index;
@@ -9179,13 +9544,16 @@ byte process_wave_one_voice
           bVar1 = 0;
         }
         wave_table->vol = bVar1;
+        *(undefined2 *)((undefined *)register0x44 + -2) = 0x2dc6;
         bVar1 = dereference_pointer_to_byte
                           (song_lookup_tables,
                            ((index >> 7) << 1 | (index << 1) >> 7) << 1 |
-                           ((index << 1 | index >> 7) << 1) >> 7);
+                           ((index << 1 | index >> 7) << 1) >> 7,((undefined *)register0x44)[-2]);
         wave_table->duration = bVar1;
         if ((index & 0x1f) != 0) {
-          index = dereference_pointer_to_byte(BYTE_ARRAY_ARRAY_ram_3bb8,index & 0xf);
+          *(undefined2 *)((undefined *)register0x44 + -2) = 0x2dd4;
+          index = dereference_pointer_to_byte
+                            (BYTE_ARRAY_ARRAY_ram_3bb8,index & 0xf,((undefined *)register0x44)[-2]);
           wave_table->base_freq = index;
         }
       }
@@ -9212,7 +9580,9 @@ byte process_wave_one_voice
            (((index | bVar1 << 7) >> 1 | index << 7) >> 1 | ((index & 2) >> 1) << 7) >> 1 |
            ((index & 4) >> 2) << 7;
       index = wave_table->type;
-      jump_table((undefined *)effect_fn_table,index);
+                    // WARNING: Return address prevents inlining here
+      *(undefined2 *)((undefined *)register0x44 + -2) = 0x2f02;
+      jump_table_fn(*(undefined **)((undefined *)register0x44 + -2),index);
       return index;
     }
     index = index >> 1;
@@ -9343,7 +9713,8 @@ LAB_ram_2ecd:
        (((index | bVar5 << 7) >> 1 | index << 7) >> 1 | ((index & 2) >> 1) << 7) >> 1 |
        ((index & 4) >> 2) << 7;
   index = effect->type;
-  jump_table((undefined *)effect_fn_table,index);
+                    // WARNING: Return address prevents inlining here
+  jump_table_fn((undefined *)effect_fn_table,index);
   return index;
 }
 
@@ -9452,6 +9823,8 @@ void effect_TYPE4_volume_decrease_1_8(effect_t *effect)
 }
 
 
+
+// WARNING: Unknown calling convention yet parameter storage is locked
 
 void NOP(void)
 
@@ -9646,6 +10019,11 @@ byte wave_cmdF_end_of_song(undefined *param_1,byte *param_2)
 
 
 // WARNING: This function may have set the stack pointer
+// 3000 - 3fff
+// this rom is somehow overlayed from U7 on the aux board.
+// rst 38 continuation (initalization routine portion)
+// the rom checksum routine
+// 
 
 void interrupt_vector_pacman_only(void)
 
@@ -9653,197 +10031,218 @@ void interrupt_vector_pacman_only(void)
   ushort uVar1;
   char cVar2;
   task_core_e index;
-  byte n;
-  undefined2 uVar3;
-  char cVar8;
-  ushort uVar4;
-  ushort uVar5;
-  short sVar6;
-  ushort uVar7;
-  ushort uVar9;
+  ushort in_AF;
   byte c;
-  char *pcVar10;
-  char cVar14;
+  byte n;
+  char cVar7;
+  ushort uVar3;
+  ushort uVar4;
+  short sVar5;
+  ushort uVar6;
+  ushort uVar8;
+  char *pcVar9;
+  byte bVar14;
+  byte *s;
+  hardware_floating_sprite_t *phVar10;
   byte *pbVar11;
-  hardware_floating_sprite_t *s;
-  byte *pbVar12;
+  undefined2 uVar12;
   undefined *puVar13;
   byte **ppbVar15;
   byte **ppbVar16;
   word *pwVar17;
   
-                    //  3000 - 3fff
-                    //  this rom is somehow overlayed from U7 on the aux board.
-                    //  rst 38 continuation (initalization routine portion)
-                    //  the rom checksum routine
-                    // 
-  pcVar10 = (char *)0x0;
+  pcVar9 = (char *)0x0;
   do {
-    hardware_coin_counter = 0;
-    cVar8 = '\x10';
     do {
+      c = 0;
+      cVar7 = '\x10';
       do {
-        hardware_coin_counter = hardware_coin_counter + *pcVar10;
-        cVar2 = (char)pcVar10;
-        n = cVar2 + 2;
-        uVar9 = (ushort)pcVar10 & 0xff00;
-        pcVar10 = (char *)(uVar9 | n);
-      } while (1 < n);
-      cVar14 = (char)(uVar9 >> 8) + '\x01';
-      pcVar10 = (char *)CONCAT11(cVar14,n);
-      cVar8 = cVar8 + -1;
-    } while (cVar8 != '\0');
+                    // HACK4
+                    // 3000  31c04f    ld      sp,#4fc0
+                    // 3003  c3c130    jp      #30c1
+                    // 
+        write_volatile_1(hardware_DSW2_watchdog,(byte)(in_AF >> 8));
+        do {
+          c = c + *pcVar9;
+          cVar2 = (char)pcVar9;
+          n = cVar2 + 2;
+          uVar8 = (ushort)pcVar9 & 0xff00;
+          pcVar9 = (char *)(uVar8 | (ushort)n);
+        } while (1 < n);
+        bVar14 = (char)(uVar8 >> 8) + 1;
+        pcVar9 = (char *)CONCAT11(bVar14,n);
+        in_AF = (ushort)n << 8;
+        cVar7 = cVar7 + -1;
+      } while (cVar7 != '\0');
                     // ; PAC and ms pac non-bootleg
                     // ;301a  2015 jr  nz, #3031 ; check for bad checksum
                     // ;
                     // 
-  } while ((cVar14 != '0') || (n = cVar2 + 3, pcVar10 = (char *)(ushort)n, n < 2));
+      write_volatile_1(hardware_coin_counter,c);
+      in_AF = (ushort)bVar14 << 8;
+    } while (bVar14 != 0x30);
+    c = cVar2 + 3;
+    pcVar9 = (char *)(ushort)c;
+    in_AF = CONCAT11(c,c < 2);
+  } while (c < 2);
                     //  RAM TEST (4c00)
                     // 
   ppbVar15 = (byte **)&DAT_ram_3154;
   do {
-    uVar9 = 0xff00;
+    uVar8 = 0xff00;
     do {
-      pbVar11 = *ppbVar15;
-      uVar7 = (ushort)ppbVar15[1];
-      uVar9 = uVar9 & 0xff00 | uVar9 >> 8;
+      s = *ppbVar15;
+      uVar6 = (ushort)ppbVar15[1];
+      uVar8 = uVar8 & 0xff00 | uVar8 >> 8;
       do {
+                    // write to RAM
+                    // 
+        write_volatile_1(hardware_DSW2_watchdog,(byte)(in_AF >> 8));
         do {
           do {
-            uVar4 = uVar9;
-            n = (byte)uVar4 & (byte)uVar7;
-            *pbVar11 = n;
-            n = n + 0x33;
-            uVar5 = uVar4 & 0xff00;
-            c = (char)pbVar11 + 1;
-            uVar1 = (ushort)pbVar11 & 0xff00;
-            pbVar11 = (byte *)(uVar1 | c);
-            uVar9 = uVar5 | n;
-          } while ((c & 0xf) != 0);
-          uVar9 = uVar5 | (byte)(n * '\x05' + 0x31);
-        } while (c != 0);
-        pbVar11 = (byte *)((ushort)(byte)((char)(uVar1 >> 8) + 1) << 8);
-        n = (char)(uVar7 >> 8) - 1;
-        uVar7 = uVar7 & 0xff | (ushort)n << 8;
-      } while (n != 0);
-      pbVar11 = *ppbVar15;
-      uVar9 = (ushort)ppbVar15[1];
-      uVar5 = uVar5 | uVar4 >> 8;
+            uVar3 = uVar8;
+            c = (byte)uVar3 & (byte)uVar6;
+            *s = c;
+            c = c + 0x33;
+            uVar4 = uVar3 & 0xff00;
+            n = (char)s + 1;
+            uVar1 = (ushort)s & 0xff00;
+            s = (byte *)(uVar1 | n);
+            uVar8 = uVar4 | c;
+          } while ((n & 0xf) != 0);
+          uVar8 = uVar4 | (byte)(c * '\x05' + 0x31);
+        } while (n != 0);
+        s = (byte *)((ushort)(byte)((char)(uVar1 >> 8) + 1) << 8);
+        c = (char)(uVar6 >> 8) - 1;
+        uVar6 = uVar6 & 0xff | (ushort)c << 8;
+        in_AF = 0;
+      } while (c != 0);
+      s = *ppbVar15;
+      uVar8 = (ushort)ppbVar15[1];
+      uVar4 = uVar4 | uVar3 >> 8;
       do {
+                    // check RAM again
+                    // 
+        write_volatile_1(hardware_DSW2_watchdog,0);
         do {
           do {
-            c = (byte)uVar9;
-            n = (byte)uVar5 & c;
-            uVar7 = (ushort)n;
-            uVar1 = uVar5 & 0xff00;
-            if ((*pbVar11 & c) != n) {
+            n = (byte)uVar8;
+            c = (byte)uVar4 & n;
+            uVar6 = (ushort)c;
+            uVar1 = uVar4 & 0xff00;
+            if ((*s & n) != c) {
                     // bad RAM
                     // 
-              uVar9 = uVar9 & 0xff00 | (ushort)(c & 1 ^ 1);
+              uVar4 = (ushort)(n & 1 ^ 1);
+              in_AF = uVar4 << 8;
+              uVar4 = uVar8 & 0xff00 | uVar4;
               goto LAB_ram_30bd;
             }
-            n = (*pbVar11 & c) + 0x33;
-            uVar5 = uVar1 | n;
-            c = (char)pbVar11 + 1;
-            uVar7 = (ushort)pbVar11 & 0xff00;
-            pbVar11 = (byte *)(uVar7 | c);
-          } while ((c & 0xf) != 0);
-          n = n * '\x05' + 0x31;
-          uVar5 = uVar1 | n;
-        } while (c != 0);
-        pbVar11 = (byte *)((ushort)(byte)((char)(uVar7 >> 8) + 1) << 8);
-        c = (char)(uVar9 >> 8) - 1;
-        uVar9 = uVar9 & 0xff | (ushort)c << 8;
-      } while (c != 0);
-      cVar8 = (char)(uVar1 >> 8) + -0x11;
-      uVar9 = CONCAT11(cVar8,n);
-    } while (cVar8 != '\0');
-    uVar3 = *ppbVar15;
-    uVar9 = (ushort)ppbVar15[1];
+            c = (*s & n) + 0x33;
+            uVar4 = uVar1 | c;
+            n = (char)s + 1;
+            uVar6 = (ushort)s & 0xff00;
+            s = (byte *)(uVar6 | n);
+          } while ((n & 0xf) != 0);
+          c = c * '\x05' + 0x31;
+          uVar4 = uVar1 | c;
+        } while (n != 0);
+        s = (byte *)((ushort)(byte)((char)(uVar6 >> 8) + 1) << 8);
+        n = (char)(uVar8 >> 8) - 1;
+        uVar8 = uVar8 & 0xff | (ushort)n << 8;
+      } while (n != 0);
+      cVar7 = (char)(uVar1 >> 8);
+      in_AF = (ushort)(byte)(cVar7 - 0x10) << 8;
+      cVar7 = cVar7 + -0x11;
+      uVar8 = CONCAT11(cVar7,c);
+    } while (cVar7 != '\0');
+    uVar8 = (ushort)*ppbVar15;
+    uVar4 = (ushort)ppbVar15[1];
     ppbVar16 = ppbVar15 + 2;
+    in_AF = uVar8 & 0xff00;
     ppbVar15 = ppbVar15 + 2;
-  } while (((char)((ushort)uVar3 >> 8) != 'D') || (ppbVar15 = ppbVar16, (char)uVar9 != -0x10));
-  uVar7 = CONCAT11(1,n);
+  } while (((char)(uVar8 >> 8) != 'D') ||
+          (in_AF = uVar4 << 8 ^ 0xf000, ppbVar15 = ppbVar16, (char)uVar4 != -0x10));
+  uVar6 = CONCAT11(1,c);
 LAB_ram_30bd:
                     // display bad ROM
                     // 
                     // clear all program RAM
                     // 
-  s = &start_of_sprites_address;
-  cVar8 = '\x04';
+  phVar10 = &start_of_sprites_address;
+  cVar7 = '\x04';
   do {
+    write_volatile_1(hardware_DSW2_watchdog,(byte)(in_AF >> 8));
     do {
-      *(undefined *)s = 0;
-      n = (char)s + 1;
-      uVar5 = (ushort)s & 0xff00;
-      s = (hardware_floating_sprite_t *)(uVar5 | n);
-    } while (n != 0);
-    s = (hardware_floating_sprite_t *)((ushort)(byte)((char)(uVar5 >> 8) + 1) << 8);
-    cVar8 = cVar8 + -1;
-  } while (cVar8 != '\0');
+      *(undefined *)phVar10 = 0;
+      c = (char)phVar10 + 1;
+      uVar8 = (ushort)phVar10 & 0xff00;
+      phVar10 = (hardware_floating_sprite_t *)(uVar8 | c);
+    } while (c != 0);
+    phVar10 = (hardware_floating_sprite_t *)((ushort)(byte)((char)(uVar8 >> 8) + 1) << 8);
+    cVar7 = cVar7 + -1;
+  } while (cVar7 != '\0');
                     // set all video ram to 0x40 - clear screen
-                    // 
-  pbVar12 = hardware_video_ram;
-  cVar8 = '\x04';
+  pbVar11 = hardware_video_ram;
+  cVar7 = '\x04';
   do {
+    write_volatile_1(hardware_DSW2_watchdog,(byte)(in_AF >> 8));
     do {
-      *pbVar12 = 0x40;
-      n = (char)pbVar12 + 1;
-      uVar5 = (ushort)pbVar12 & 0xff00;
-      pbVar12 = (byte *)(uVar5 | n);
-    } while (n != 0);
-    pbVar12 = (byte *)((ushort)(byte)((char)(uVar5 >> 8) + 1) << 8);
-    cVar8 = cVar8 + -1;
-  } while (cVar8 != '\0');
-                    //  set all color ram to 0x0f
-                    // 
-  cVar8 = '\x04';
-  n = 0x40;
+      *pbVar11 = 0x40;
+      c = (char)pbVar11 + 1;
+      uVar8 = (ushort)pbVar11 & 0xff00;
+      pbVar11 = (byte *)(uVar8 | c);
+    } while (c != 0);
+    pbVar11 = (byte *)((ushort)(byte)((char)(uVar8 >> 8) + 1) << 8);
+    in_AF = 0x4000;
+    cVar7 = cVar7 + -1;
+  } while (cVar7 != '\0');
+                    // set all color ram to 0x0f
+  cVar7 = '\x04';
   do {
-    hardware_DSW2_watchdog = n;
+    write_volatile_1(hardware_DSW2_watchdog,(byte)(in_AF >> 8));
     do {
-      *pbVar12 = 0xf;
-      n = (char)pbVar12 + 1;
-      uVar5 = (ushort)pbVar12 & 0xff00;
-      pbVar12 = (byte *)(uVar5 | n);
-    } while (n != 0);
-    pbVar12 = (byte *)((ushort)(byte)((char)(uVar5 >> 8) + 1) << 8);
-    cVar8 = cVar8 + -1;
-    n = 0xf;
-  } while (cVar8 != '\0');
+      *pbVar11 = 0xf;
+      c = (char)pbVar11 + 1;
+      uVar8 = (ushort)pbVar11 & 0xff00;
+      pbVar11 = (byte *)(uVar8 | c);
+    } while (c != 0);
+    pbVar11 = (byte *)((ushort)(byte)((char)(uVar8 >> 8) + 1) << 8);
+    in_AF = 0xf00;
+    cVar7 = cVar7 + -1;
+  } while (cVar7 != '\0');
                     //  change 30f0 - 30f2 to "00 nop" to skip checksum check. ; HACK4
                     //   if you do that, 30fb - 3173 can be reclaimed for other code use.
                     // 30f0  00 nop
                     // 30f1  00 nop
                     // 30f2  00 nop
                     // 
-  n = (char)(uVar7 >> 8) - 1;
-  ARRAY_ram_4f5c._98_2_ = (undefined *)(uVar7 & 0xff | (ushort)n << 8);
-  if (n != 0) {
+  c = (char)(uVar6 >> 8) - 1;
+  ARRAY_ram_4f5c._98_2_ = uVar6 & 0xff | (ushort)c << 8;
+  if (c != 0) {
                     // HACK 0
                     // run the game!
                     // 
-    hardware_video_ram[388] = (char)uVar9 + 0x30;
+    hardware_screen_maze_area[11][16] = (char)uVar4 + 0x30;
     ARRAY_ram_4f5c._94_2_ = 0x3108;
-    ARRAY_ram_4f5c._96_2_ = (undefined **)pbVar11;
+    ARRAY_ram_4f5c._96_2_ = s;
     DrawText(BAD_R_M);
-    n = (byte)((ushort)ARRAY_ram_4f5c._96_2_ >> 8);
-    uVar3 = DAT_ram_316c;
-    if (((0x3f < n) && (uVar3 = DAT_ram_316e, n < 0x4c)) && (uVar3 = DAT_ram_3170, 0x43 < n)) {
-      uVar3 = DAT_ram_3172;
+    c = (byte)((ushort)ARRAY_ram_4f5c._96_2_ >> 8);
+    uVar12 = DAT_ram_316c;
+    if (((0x3f < c) && (uVar12 = DAT_ram_316e, c < 0x4c)) && (uVar12 = DAT_ram_3170, 0x43 < c)) {
+      uVar12 = DAT_ram_3172;
     }
-    hardware_video_ram[516] = (byte)uVar3;
-    hardware_video_ram[612] = (byte)((ushort)uVar3 >> 8);
-    sVar6 = ((ushort)((byte)hardware_IN1 | (byte)hardware_IN0) & 1) << 8;
+    hardware_screen_maze_area[16][4] = (byte)uVar12;
+    hardware_screen_maze_area[19][16] = (byte)((ushort)uVar12 >> 8);
+    sVar5 = ((ushort)((byte)hardware_IN1 | (byte)hardware_IN0) & 1) << 8;
     if ((((byte)hardware_IN1 | (byte)hardware_IN0) & 1) == 0) {
-      sVar6 = (((ushort)ARRAY_ram_4f5c._98_2_ & 0xf0) >> 4) << 8;
-      hardware_video_ram._389_2_ =
-           (ushort)((byte)ARRAY_ram_4f5c._98_2_ & 0xf) << 8 |
-           ((ushort)ARRAY_ram_4f5c._98_2_ & 0xf0) >> 4;
+      sVar5 = ((ARRAY_ram_4f5c._98_2_ & 0xf0) >> 4) << 8;
+      hardware_screen_maze_area[11]._17_2_ =
+           (ushort)((byte)ARRAY_ram_4f5c._98_2_ & 0xf) << 8 | (ARRAY_ram_4f5c._98_2_ & 0xf0) >> 4;
     }
     do {
-      hardware_DSW2_watchdog = (byte)((ushort)sVar6 >> 8);
-      sVar6 = ((ushort)(byte)hardware_IN1 & 0x10) << 8;
+      write_volatile_1(hardware_DSW2_watchdog,(byte)((ushort)sVar5 >> 8));
+      sVar5 = ((ushort)(byte)hardware_IN1 & 0x10) << 8;
     } while (((byte)hardware_IN1 & 0x10) == 0);
     startup_test((byte)hardware_IN1 & 0x10);
     return;
@@ -9853,22 +10252,23 @@ LAB_ram_30bd:
                     // 30f6  00 nop
                     // 30f7  00 nop
                     // 
-  ARRAY_ram_4f5c._98_2_ = (undefined *)0x30f8;
+  ARRAY_ram_4f5c._98_2_ = 0x30f8;
   DrawText(MEMORY_OK);
                     //  start the main section... (tests first)
                     // 
-  pbVar11 = &hardware_coin_lockout_global;
+  s = &hardware_coin_lockout_global;
   do {
-    *pbVar11 = 1;
-    n = (char)pbVar11 - 1;
-    pbVar11 = (byte *)((ushort)pbVar11 & 0xff00 | (ushort)n);
-  } while (n != 0);
-  hardware_flipscreen = 0;
-  hardware_DSW2_watchdog = 0xfc;
+    *s = 1;
+    c = (char)s - 1;
+    s = (byte *)((ushort)s & 0xff00 | (ushort)c);
+  } while (c != 0);
+  hardware_flipscreen = false;
+  c = 0xfc;
                     // pac:
                     // set vector TO #8D WHEN INTERRUPT
                     // 
   do {
+    write_volatile_1(hardware_DSW2_watchdog,c);
                     // Skip test mode: HACK7
                     // set stack pointer
                     // skip over the test mode
@@ -9898,46 +10298,49 @@ LAB_ram_30bd:
     if (true) {
       channel_3_effect.num = 0x20;
     }
-    ARRAY_ram_4f5c._98_2_ = (undefined *)0x31ea;
-    DrawText((hardware_DSW1 & 3) + FREE_PLAY_25);
-    n = hardware_DSW1 >> 4 & 3;
-    if (n == 3) {
-      ARRAY_ram_4f5c._98_2_ = (undefined *)0x31fc;
+    c = read_volatile_1(hardware_DSW1);
+    ARRAY_ram_4f5c._98_2_ = 0x31ea;
+    DrawText((c & 3) + FREE_PLAY_25);
+    c = read_volatile_1(hardware_DSW1);
+    c = c >> 4 & 3;
+    if (c == 3) {
+      ARRAY_ram_4f5c._98_2_ = 0x31fc;
       DrawText(BONUS_NONE);
     }
     else {
-      ARRAY_ram_4f5c._98_2_ = (undefined *)(uVar9 & 0xff00 | (ushort)(byte)(n << 1));
-      ARRAY_ram_4f5c._96_2_ = (undefined **)0x3207;
+      ARRAY_ram_4f5c._98_2_ = uVar4 & 0xff00 | (ushort)(byte)(c << 1);
+      ARRAY_ram_4f5c._96_2_ = (byte *)0x3207;
       DrawText(BONUS);
-      ARRAY_ram_4f5c._96_2_ = (undefined **)0x320c;
+      ARRAY_ram_4f5c._96_2_ = (byte *)0x320c;
       DrawText(T_000);
-      uVar9 = (ushort)ARRAY_ram_4f5c._98_2_ & 0xff;
-      hardware_video_ram[554] = bonus_table_text[uVar9];
-      hardware_video_ram[586] = bonus_table_text[uVar9 + 1];
+      uVar4 = ARRAY_ram_4f5c._98_2_ & 0xff;
+      hardware_screen_maze_area[17][14] = bonus_table_text[uVar4];
+      hardware_screen_maze_area[18][18] = bonus_table_text[uVar4 + 1];
     }
-    n = hardware_DSW1 >> 2 & 3;
-    hardware_video_ram[428] = n + 0x31;
-    if (hardware_video_ram[428] == 0x34) {
-      hardware_video_ram[428] = n + 0x32;
+    c = read_volatile_1(hardware_DSW1);
+    c = c >> 2 & 3;
+    hardware_screen_maze_area[13][0] = c + 0x31;
+    if (hardware_screen_maze_area[13][0] == 0x34) {
+      hardware_screen_maze_area[13][0] = c + 0x32;
     }
                     // pac:
                     // 322a  320c42    ld      (#420c),a
                     // 
-    ARRAY_ram_4f5c._98_2_ = (undefined *)0x3232;
+    ARRAY_ram_4f5c._98_2_ = 0x3232;
     DrawText(MS_PAC_MEN);
-    ARRAY_ram_4f5c._98_2_ = (undefined *)0x323e;
+    ARRAY_ram_4f5c._98_2_ = 0x323e;
     DrawText(TABLE - ((char)hardware_IN1 >> 7));
-    hardware_DSW2_watchdog = (byte)hardware_IN1 & 0x10;
+    c = (byte)hardware_IN1 & 0x10;
   } while (((byte)hardware_IN1 & 0x10) == 0);
   hardware_IN0 = (in0_t)0x0;
   disableMaskableInterrupts();
-  pbVar11 = &hardware_coin_counter;
+  s = &hardware_coin_counter;
   do {
-    *pbVar11 = 0;
-    n = (char)pbVar11 - 1;
-    pbVar11 = (byte *)((ushort)pbVar11 & 0xff00 | (ushort)n);
-    sVar6 = 0;
-  } while (n != 0);
+    *s = 0;
+    c = (char)s - 1;
+    s = (byte *)((ushort)s & 0xff00 | (ushort)c);
+    sVar5 = 0;
+  } while (c != 0);
                     // eliminate just the test grid: HACK7 (alternate)
                     // 3253  31c04f    ld      sp,#4fc0
                     // 3262  c38632    jp      #3286
@@ -9945,49 +10348,49 @@ LAB_ram_30bd:
                     // prep for the test grid
                     // 
   pwVar17 = &WORD_ram_3ae2;
-  cVar8 = '\x03';
+  cVar7 = '\x03';
   do {
     puVar13 = (undefined *)*pwVar17;
-    uVar9 = pwVar17[1];
+    uVar8 = pwVar17[1];
     do {
-      hardware_DSW2_watchdog = (byte)((ushort)sVar6 >> 8);
-      sVar6 = pwVar17[2];
+      write_volatile_1(hardware_DSW2_watchdog,(byte)((ushort)sVar5 >> 8));
+      sVar5 = pwVar17[2];
       do {
                     //  draw the test grid to the screen
                     // 
         *puVar13 = 0x3c;
-        puVar13[1] = (char)(uVar9 >> 8);
+        puVar13[1] = (char)(uVar8 >> 8);
         puVar13 = puVar13 + 2;
-        n = (char)((ushort)sVar6 >> 8) - 1;
-        sVar6 = (ushort)n << 8;
-      } while (n != 0);
-      uVar7 = pwVar17[2];
+        c = (char)((ushort)sVar5 >> 8) - 1;
+        sVar5 = (ushort)c << 8;
+      } while (c != 0);
+      uVar6 = pwVar17[2];
       do {
-        *puVar13 = (char)uVar7;
+        *puVar13 = (char)uVar6;
         puVar13[1] = 0x3f;
         puVar13 = puVar13 + 2;
-        n = (char)(uVar7 >> 8) - 1;
-        uVar7 = uVar7 & 0xff | (ushort)n << 8;
-      } while (n != 0);
-      n = (char)uVar9 - 1;
-      uVar9 = uVar9 & 0xff00 | (ushort)n;
-      sVar6 = 0x3f00;
-    } while (n != 0);
-    sVar6 = pwVar17[2];
+        c = (char)(uVar6 >> 8) - 1;
+        uVar6 = uVar6 & 0xff | (ushort)c << 8;
+      } while (c != 0);
+      c = (char)uVar8 - 1;
+      uVar8 = uVar8 & 0xff00 | (ushort)c;
+      sVar5 = 0x3f00;
+    } while (c != 0);
+    sVar5 = pwVar17[2];
     pwVar17 = pwVar17 + 3;
-    cVar8 = cVar8 + -1;
-  } while (cVar8 != '\0');
-  cVar8 = '\b';
+    cVar7 = cVar7 + -1;
+  } while (cVar7 != '\0');
+  cVar7 = '\b';
   do {
-    ARRAY_ram_4f5c._98_2_ = (undefined *)0x3284;
-    sleep2800((char)((ushort)sVar6 >> 8));
-    cVar8 = cVar8 + -1;
-  } while (cVar8 != '\0');
+    ARRAY_ram_4f5c._98_2_ = 0x3284;
+    sleep2800((char)((ushort)sVar5 >> 8));
+    cVar7 = cVar7 + -1;
+  } while (cVar7 != '\0');
   do {
                     // loop until service switch turned off
                     // 
-    hardware_DSW2_watchdog = (byte)((ushort)sVar6 >> 8);
-    sVar6 = ((ushort)(byte)hardware_IN1 & 0x10) << 8;
+    write_volatile_1(hardware_DSW2_watchdog,(byte)((ushort)sVar5 >> 8));
+    sVar5 = ((ushort)(byte)hardware_IN1 & 0x10) << 8;
   } while (((byte)hardware_IN1 & 0x10) == 0);
                     //   check the condition to display the easter egg
                     // This piece of code is found in the original Midway Pac-Man ROMs @ #3289.
@@ -10002,107 +10405,111 @@ LAB_ram_30bd:
                     // Down 4 times
                     //     - Widel/Mowerman
                     // 
-  n = (byte)hardware_IN1 & 0x60;
+  c = (byte)hardware_IN1 & 0x60;
   if (((byte)hardware_IN1 & 0x60) == 0) {
-    cVar8 = '\b';
+    cVar7 = '\b';
     do {
-      ARRAY_ram_4f5c._98_2_ = (undefined *)0x329d;
-      sleep2800(n);
-      cVar8 = cVar8 + -1;
-    } while (cVar8 != '\0');
-    n = (byte)hardware_IN1 & 0x10;
+      ARRAY_ram_4f5c._98_2_ = 0x329d;
+      sleep2800(c);
+      cVar7 = cVar7 + -1;
+    } while (cVar7 != '\0');
+    c = (byte)hardware_IN1 & 0x10;
     if (((byte)hardware_IN1 & 0x10) == 0) {
-      uVar9 = 1;
+      uVar8 = 1;
       do {
-        sVar6 = 0x400;
+        sVar5 = 0x400;
         do {
           do {
-            ARRAY_ram_4f5c._98_2_ = (undefined *)0x32b1;
-            hardware_DSW2_watchdog = n;
-            sleep2800(n);
-            n = (byte)hardware_IN0 & (byte)uVar9;
-          } while (n != 0);
+            write_volatile_1(hardware_DSW2_watchdog,c);
+            ARRAY_ram_4f5c._98_2_ = 0x32b1;
+            sleep2800(c);
+            c = (byte)hardware_IN0 & (byte)uVar8;
+          } while (c != 0);
           do {
-            ARRAY_ram_4f5c._98_2_ = (undefined *)0x32ba;
-            c = n;
-            sleep2800(n);
-            n = (byte)hardware_IN0 ^ 0xff;
-            hardware_DSW2_watchdog = c;
+            ARRAY_ram_4f5c._98_2_ = 0x32ba;
+            sleep2800(c);
+            write_volatile_1(hardware_DSW2_watchdog,c);
+            c = (byte)hardware_IN0 ^ 0xff;
           } while (hardware_IN0 != (in0_t)0xff);
-          c = (char)((ushort)sVar6 >> 8) - 1;
-          sVar6 = (ushort)c << 8;
-        } while (c != 0);
-        n = (byte)uVar9 << 1 | (byte)uVar9 >> 7;
-        uVar9 = (ushort)n;
-      } while (n < 0x10);
+          n = (char)((ushort)sVar5 >> 8) - 1;
+          sVar5 = (ushort)n << 8;
+        } while (n != 0);
+        c = (byte)uVar8 << 1 | (byte)uVar8 >> 7;
+        uVar8 = (ushort)c;
+      } while (c < 0x10);
                     //  draw the "Made By Namco" easter egg
                     // clear the screen...
                     // 
-      pbVar11 = hardware_video_ram;
-      cVar8 = '\x04';
+      s = hardware_video_ram;
+      cVar7 = '\x04';
       do {
+        c = 0x40;
         do {
-          *pbVar11 = 0x40;
-          n = (char)pbVar11 + 1;
-          uVar9 = (ushort)pbVar11 & 0xff00;
-          pbVar11 = (byte *)(uVar9 | n);
+          *s = 0x40;
+          n = (char)s + 1;
+          uVar8 = (ushort)s & 0xff00;
+          s = (byte *)(uVar8 | n);
         } while (n != 0);
-        pbVar11 = (byte *)((ushort)(byte)((char)(uVar9 >> 8) + 1) << 8);
-        cVar8 = cVar8 + -1;
-      } while (cVar8 != '\0');
-      ARRAY_ram_4f5c._98_2_ = (undefined *)0x32df;
+        s = (byte *)((ushort)(byte)((char)(uVar8 >> 8) + 1) << 8);
+        cVar7 = cVar7 + -1;
+      } while (cVar7 != '\0');
+      ARRAY_ram_4f5c._98_2_ = 0x32df;
       draw_easter_egg__Made_By_Namco();
       do {
                     // wait for service switch to be off
                     // 
-        n = (byte)hardware_IN1 & 0x10;
+        write_volatile_1(hardware_DSW2_watchdog,c);
+        c = (byte)hardware_IN1 & 0x10;
       } while (((byte)hardware_IN1 & 0x10) == 0);
     }
   }
+  write_volatile_1(hardware_DSW2_watchdog,c);
   c = 0;
-  ARRAY_ram_4f5c._98_2_ = (undefined *)0x2359;
-  hardware_DSW2_watchdog = n;
+  ARRAY_ram_4f5c._98_2_ = 0x2359;
   memset((byte *)&hardware_IN0,0,8);
-  s = &start_of_sprites_address;
   n = 0xbe;
-  ARRAY_ram_4f5c._98_2_ = (undefined *)0x235f;
-  memset((byte *)&start_of_sprites_address,c,0xbe);
-  ARRAY_ram_4f5c._98_2_ = (undefined *)0x2360;
-  memset((byte *)s,c,n);
-  ARRAY_ram_4f5c._98_2_ = (undefined *)0x2361;
-  memset((byte *)s,c,n);
-  ARRAY_ram_4f5c._98_2_ = (undefined *)0x2362;
-  memset((byte *)s,c,n);
-  ARRAY_ram_4f5c._98_2_ = (undefined *)0x2368;
+  ARRAY_ram_4f5c._98_2_ = 0x235f;
+  s = (byte *)memset((byte *)&start_of_sprites_address,c,0xbe);
+  ARRAY_ram_4f5c._98_2_ = 0x2360;
+  s = (byte *)memset(s,c,n);
+  ARRAY_ram_4f5c._98_2_ = 0x2361;
+  s = (byte *)memset(s,c,n);
+  ARRAY_ram_4f5c._98_2_ = 0x2362;
+  memset(s,c,n);
+  ARRAY_ram_4f5c._98_2_ = 0x2368;
   memset((byte *)&hardware_IN1,c,0x40);
-  ARRAY_ram_4f5c._98_2_ = (undefined *)0x236e;
-  hardware_DSW2_watchdog = c;
+  write_volatile_1(hardware_DSW2_watchdog,c);
+  ARRAY_ram_4f5c._98_2_ = 0x236e;
   T06_clears_color_RAM();
-  ARRAY_ram_4f5c._98_2_ = (undefined *)0x2376;
-  hardware_DSW2_watchdog = c;
+  write_volatile_1(hardware_DSW2_watchdog,c);
+  ARRAY_ram_4f5c._98_2_ = 0x2376;
   T00_clear_whole_screen_or_maze(0);
-  p_task_list_next_free = task_list;
-  p_task_list_begin = task_list;
-  ARRAY_ram_4f5c._98_2_ = (undefined *)0x2387;
-  hardware_DSW2_watchdog = c;
-  memset((byte *)task_list,0xff,0x40);
+  write_volatile_1(hardware_DSW2_watchdog,c);
+  p_task_list_next_free = tasks_to_execute_outside_of_irq;
+  p_task_list_begin = tasks_to_execute_outside_of_irq;
+  ARRAY_ram_4f5c._98_2_ = 0x2387;
+  memset((byte *)tasks_to_execute_outside_of_irq,0xff,0x40);
   hardware_IN0 = (in0_t)0x1;
   enableMaskableInterrupts();
+  s = _STACK_END;
   do {
-    index = p_task_list_begin->value;
-  } while ((short)((ushort)index << 8) < 0);
-  p_task_list_begin->value = ~clear_whole_screen_or_maze;
-  uVar9 = (ushort)p_task_list_begin & 0xff00;
-  *(undefined *)(uVar9 | (byte)((char)p_task_list_begin + 1)) = 0xff;
-  n = (char)p_task_list_begin + 2;
-  p_task_list_begin = (task_core_t *)(uVar9 | n);
-  if (n == 0) {
-    p_task_list_begin = (task_core_t *)CONCAT11((char)(uVar9 >> 8),0xc0);
-  }
-  ARRAY_ram_4f5c._98_2_ = &execute_CORE_task;
-  ARRAY_ram_4f5c._96_2_ = core_fn_table;
-  jump_table((undefined *)core_fn_table,index);
-  return;
+    do {
+      index = p_task_list_begin->value;
+    } while ((short)((ushort)index << 8) < 0);
+    p_task_list_begin->value = ~clear_whole_screen_or_maze;
+    uVar8 = (ushort)p_task_list_begin & 0xff00;
+    *(undefined *)(uVar8 | (byte)((char)p_task_list_begin + 1)) = 0xff;
+    c = (char)p_task_list_begin + 2;
+    p_task_list_begin = (task_core_t *)(uVar8 | c);
+    if (c == 0) {
+      p_task_list_begin = (task_core_t *)CONCAT11((char)(uVar8 >> 8),0xc0);
+    }
+    *(undefined2 *)(s + -2) = 0x238d;
+                    // WARNING: Return address prevents inlining here
+    *(undefined2 *)(s + -4) = 0x23a8;
+    jump_table_fn(*(undefined **)(s + -4),index);
+    s = s + -2;
+  } while( true );
 }
 
 
@@ -10114,11 +10521,11 @@ void sleep2800(byte watchdog)
   
                     // delay timer
                     // 
+  write_volatile_1(hardware_DSW2_watchdog,watchdog);
   delay = 0x2800;
   do {
     delay = delay + -1;
   } while ((byte)((byte)((ushort)delay >> 8) | (byte)delay) != 0);
-  hardware_DSW2_watchdog = watchdog;
   return;
 }
 
@@ -10193,154 +10600,166 @@ void mspacman_state_for_1st_intermission_patch(void)
   byte bVar2;
   char cVar3;
   byte bVar4;
-  byte in_C;
-  undefined2 uVar5;
   byte index;
-  ushort uVar6;
-  byte *pbVar7;
+  byte in_C;
+  undefined uVar5;
+  undefined2 uVar6;
+  ushort uVar7;
+  byte *pbVar8;
+  short sVar9;
+  char *pcVar10;
+  undefined *puVar11;
+  undefined1 *puVar12;
   byte *lookup_table;
-  short sVar8;
-  char *pcVar9;
-  undefined *puVar10;
-  undefined1 *puVar11;
-  byte **ppbVar12;
-  dereference_word_t dVar13;
+  byte **ppbVar13;
+  dereference_word_t dVar14;
   word *lookup_table_00;
   
   if (intermission_mode != true) {
-    insert_task((word *)&task_draw_they_meet);
+                    // WARNING: Return address prevents inlining here
+    insert_task(&task_draw_they_meet);
+    hardware_screen_maze_area[22][4] = 1;
+    BYTE_ARRAY_ARRAY_ram_4440[22][4] = 0x16;
+    intermissions_and_attract_mode_animation_main_routine(0);
     return;
   }
   if (false) {
     generate_animations(in_C);
   }
-  uVar6 = CONCAT11(6,in_C);
-  ppbVar12 = animation_current + 5;
+  uVar7 = CONCAT11(6,in_C);
+  ppbVar13 = animation_current + 5;
   do {
-    index = (byte)(uVar6 >> 8);
-    lookup_table = *ppbVar12;
+    uVar5 = (undefined)uVar7;
+    index = (byte)(uVar7 >> 8);
+    lookup_table = *ppbVar13;
     bVar2 = *lookup_table;
     if (bVar2 == 0xf0) {
 intermissions_and_attract_mode_animation_main_routine_animation_code_F0_loop:
       bVar2 = dereference_pointer_to_byte(lookup_table,1);
-      uVar5 = CONCAT11(index,bVar2);
-      dVar13 = dereference_pointer_to_word(WORD_ARRAY_ram_4f2e,index);
-      pbVar7 = (byte *)((uint5)dVar13 >> 8);
-      bVar2 = animation_code_f0_loop_sub_stuff((char)uVar5 + (char)((uint5)dVar13 >> 0x20));
-      *pbVar7 = bVar2;
-      lookup_table_00 = (word *)animation_code_f0_and_f1_sub_stuff(uVar5);
-      dVar13 = dereference_pointer_to_word(lookup_table_00,(byte)((ushort)uVar5 >> 8));
-      index = (byte)((ushort)uVar5 >> 8);
-      *(char *)((uint5)dVar13 >> 8) = (char)((uint5)dVar13 >> 0x20) + (char)uVar5;
+      uVar6 = CONCAT11(index,bVar2);
+      dVar14 = dereference_pointer_to_word(WORD_ARRAY_ram_4f2e,index);
+      pbVar8 = (byte *)((uint5)dVar14 >> 8);
+      bVar2 = animation_code_f0_loop_sub_stuff((char)uVar6 + (char)((uint5)dVar14 >> 0x20));
+      *pbVar8 = bVar2;
+      lookup_table_00 = (word *)animation_code_f0_and_f1_sub_stuff(uVar6);
+      dVar14 = dereference_pointer_to_word(lookup_table_00,(byte)((ushort)uVar6 >> 8));
+      index = (byte)((ushort)uVar6 >> 8);
+      *(char *)((uint5)dVar14 >> 8) = (char)((uint5)dVar14 >> 0x20) + (char)uVar6;
       bVar2 = dereference_pointer_to_byte(lookup_table,2);
-      uVar5 = CONCAT11(index,bVar2);
-      dVar13 = dereference_pointer_to_word(WORD_ARRAY_ram_4f2e,index);
-      sVar8 = (short)((uint5)dVar13 >> 8);
-      bVar2 = animation_code_f0_loop_sub_stuff((char)uVar5 + (char)((uint5)dVar13 >> 0x18));
-      *(byte *)(sVar8 + -1) = bVar2;
-      lookup_table_00 = (word *)animation_code_f0_and_f1_sub_stuff(uVar5);
-      dVar13 = dereference_pointer_to_word(lookup_table_00,(byte)((ushort)uVar5 >> 8));
-      *(char *)((short)((uint5)dVar13 >> 8) + -1) = (char)((uint5)dVar13 >> 0x18) + (char)uVar5;
-      pcVar9 = &DAT_ram_4f0f;
-      index = (byte)((ushort)uVar5 >> 8);
+      uVar6 = CONCAT11(index,bVar2);
+      dVar14 = dereference_pointer_to_word(WORD_ARRAY_ram_4f2e,index);
+      sVar9 = (short)((uint5)dVar14 >> 8);
+      bVar2 = animation_code_f0_loop_sub_stuff((char)uVar6 + (char)((uint5)dVar14 >> 0x18));
+      *(byte *)(sVar9 + -1) = bVar2;
+      lookup_table_00 = (word *)animation_code_f0_and_f1_sub_stuff(uVar6);
+      dVar14 = dereference_pointer_to_word(lookup_table_00,(byte)((ushort)uVar6 >> 8));
+      *(char *)((short)((uint5)dVar14 >> 8) + -1) = (char)((uint5)dVar14 >> 0x18) + (char)uVar6;
+      pcVar10 = &DAT_ram_4f0f;
+      index = (byte)((ushort)uVar6 >> 8);
       bVar2 = dereference_pointer_to_byte(&DAT_ram_4f0f,index);
       cVar3 = bVar2 + 1;
       while( true ) {
-        dVar13 = dereference_pointer_to_word(WORD_ARRAY_ram_4f3e,index);
-        bVar2 = dereference_pointer_to_byte((byte *)((uint5)dVar13 >> 0x18),cVar3 >> 1);
+        dVar14 = dereference_pointer_to_word(WORD_ARRAY_ram_4f3e,index);
+        bVar2 = dereference_pointer_to_byte((byte *)((uint5)dVar14 >> 0x18),cVar3 >> 1);
         if (bVar2 != 0xff) break;
         cVar3 = '\0';
       }
-      *pcVar9 = cVar3;
+      *pcVar10 = cVar3;
       bVar4 = dereference_pointer_to_byte(lookup_table,3);
-      dVar13 = dereference_pointer_to_word(&WORD_ram_4f4e,index);
-      lookup_table = (byte *)((uint5)dVar13 >> 8);
+      dVar14 = dereference_pointer_to_word(&WORD_ram_4f4e,index);
+      lookup_table = (byte *)((uint5)dVar14 >> 8);
       *lookup_table = bVar4;
-      uVar6 = CONCAT11(index,current_player_number);
+      uVar7 = CONCAT11(index,current_player_number);
       if ((cocktail_mode & current_player_number) != 0) {
         bVar2 = bVar2 ^ 0xc0;
       }
       lookup_table[-1] = bVar2;
-      pcVar9 = &animation_cmd_setn;
+      pcVar10 = &animation_cmd_setn;
       bVar2 = dereference_pointer_to_byte(&animation_cmd_setn,index);
-      *pcVar9 = bVar2 - 1;
-      sVar8 = 0;
+      *pcVar10 = bVar2 - 1;
+      sVar9 = 0;
       if ((byte)(bVar2 - 1) == '\0') {
-        sVar8 = 4;
+        sVar9 = 4;
       }
     }
     else {
       if (bVar2 == 0xf1) {
-        lookup_table_00 = (word *)animation_code_f0_and_f1_sub_stuff(uVar6);
-        uVar5 = CONCAT11(lookup_table[1],lookup_table[2]);
+        lookup_table_00 = (word *)animation_code_f0_and_f1_sub_stuff(uVar7);
+        uVar6 = CONCAT11(lookup_table[1],lookup_table[2]);
 intermissions_and_attract_mode_animation_main_routine_cleanup_for_return_from_f0_f1_f3:
-        dVar13 = dereference_pointer_to_word(lookup_table_00,(byte)(uVar6 >> 8));
-        puVar10 = (undefined *)((uint5)dVar13 >> 8);
-        *puVar10 = (char)((ushort)uVar5 >> 8);
-        puVar10[-1] = (char)uVar5;
-        sVar8 = 3;
+        dVar14 = dereference_pointer_to_word(lookup_table_00,(byte)(uVar7 >> 8));
+        puVar11 = (undefined *)((uint5)dVar14 >> 8);
+        *puVar11 = (char)((ushort)uVar6 >> 8);
+        puVar11[-1] = (char)uVar6;
+        sVar9 = 3;
       }
       else {
         if (bVar2 == 0xf2) {
-          uVar1 = uVar6 & 0xff00;
-          uVar6 = uVar1 | lookup_table[1];
-          puVar11 = &animation_cmd_setn;
+          uVar1 = uVar7 & 0xff00;
+          uVar7 = uVar1 | lookup_table[1];
+          puVar12 = &animation_cmd_setn;
           dereference_pointer_to_byte(&animation_cmd_setn,(byte)(uVar1 >> 8));
-          *puVar11 = (char)uVar6;
-          sVar8 = 2;
+          *puVar12 = (char)uVar7;
+          sVar9 = 2;
         }
         else {
           if (bVar2 == 0xf3) {
-            puVar10 = &DAT_ram_4f0f;
+            puVar11 = &DAT_ram_4f0f;
             dereference_pointer_to_byte(&DAT_ram_4f0f,index);
-            *puVar10 = 0;
+            *puVar11 = 0;
             lookup_table_00 = WORD_ARRAY_ram_4f3e;
-            uVar5 = *(undefined2 *)(lookup_table + 1);
+            uVar6 = *(undefined2 *)(lookup_table + 1);
             goto 
             intermissions_and_attract_mode_animation_main_routine_cleanup_for_return_from_f0_f1_f3;
           }
           if (bVar2 == 0xf5) {
             channel_3_effect.num = lookup_table[1];
-            sVar8 = 2;
+            sVar9 = 2;
           }
           else {
             if (bVar2 == 0xf6) {
-              pcVar9 = &animation_cmd_setn;
+              pcVar10 = &animation_cmd_setn;
               bVar2 = dereference_pointer_to_byte(&animation_cmd_setn,index);
-              *pcVar9 = bVar2 - 1;
-              sVar8 = 0;
+              *pcVar10 = bVar2 - 1;
+              sVar9 = 0;
               if ((byte)(bVar2 - 1) == '\0') {
-                sVar8 = 1;
+                sVar9 = 1;
               }
             }
             else {
               if (bVar2 == 0xf7) {
-                insert_task((word *)&draw_space);
-                return;
-              }
-              if (bVar2 == 0xf8) {
-                hardware_video_ram[684] = 0x40;
-                sVar8 = 1;
+                    // WARNING: Return address prevents inlining here
+                insert_task(&task_text_or_graphics_draw_space);
+                uVar7 = CONCAT11(index,uVar5);
+                sVar9 = 1;
               }
               else {
-                if (bVar2 != 0xff) {
-                  halt();
-                  goto intermissions_and_attract_mode_animation_main_routine_animation_code_F0_loop;
+                if (bVar2 == 0xf8) {
+                  hardware_screen_maze_area[22][4] = 0x40;
+                  sVar9 = 1;
                 }
-                puVar11 = &__stack_data_maybe_size_0x14;
-                dereference_pointer_to_byte(&__stack_data_maybe_size_0x14,index);
-                *puVar11 = 1;
-                sVar8 = 0;
-                if ((DAT_ram_4f20 & DAT_ram_4f21 & DAT_ram_4f22 & DAT_ram_4f23 & DAT_ram_4f24 &
-                    DAT_ram_4f25) != 0) {
-                  if (subroutine_DEMO_state == 0) {
-                    add_timed_task(&task_timed_t_ram_2196);
-                    subroutine_PLAYING_state = subroutine_PLAYING_state + 1;
+                else {
+                  if (bVar2 != 0xff) {
+                    halt();
+                    goto 
+                    intermissions_and_attract_mode_animation_main_routine_animation_code_F0_loop;
+                  }
+                  lookup_table = &__stack_data_maybe_size_0x14;
+                  dereference_pointer_to_byte(&__stack_data_maybe_size_0x14,index);
+                  *lookup_table = 1;
+                  sVar9 = 0;
+                  if ((BYTE_ram_4f20 & BYTE_ram_4f21 & BYTE_ram_4f22 & BYTE_ram_4f23 & BYTE_ram_4f24
+                      & BYTE_ram_4f25) != 0) {
+                    if (subroutine_DEMO_state == 0) {
+                    // WARNING: Return address prevents inlining here
+                      add_timed_task(&task_increase_subroutine_PLAYING_state);
+                      subroutine_PLAYING_state = subroutine_PLAYING_state + 1;
+                      return;
+                    }
+                    intermission_mode = false;
+                    TT02_increase_subroutine_DEMO_state();
                     return;
                   }
-                  intermission_mode = false;
-                  TT02_increase_subroutine_DEMO_state();
-                  return;
                 }
               }
             }
@@ -10348,12 +10767,12 @@ intermissions_and_attract_mode_animation_main_routine_cleanup_for_return_from_f0
         }
       }
     }
-    lookup_table = *ppbVar12;
-    *(char *)ppbVar12 = (char)(lookup_table + sVar8);
-    *(undefined *)((short)ppbVar12 + 1) = (char)((ushort)(lookup_table + sVar8) >> 8);
-    ppbVar12 = ppbVar12 + -1;
-    bVar2 = (char)(uVar6 >> 8) - 1;
-    uVar6 = uVar6 & 0xff | (ushort)bVar2 << 8;
+    lookup_table = *ppbVar13;
+    *(char *)ppbVar13 = (char)(lookup_table + sVar9);
+    *(undefined *)((short)ppbVar13 + 1) = (char)((ushort)(lookup_table + sVar9) >> 8);
+    ppbVar13 = ppbVar13 + -1;
+    bVar2 = (char)(uVar7 >> 8) - 1;
+    uVar7 = uVar7 & 0xff | (ushort)bVar2 << 8;
     if (bVar2 == 0) {
       return;
     }
@@ -10372,154 +10791,166 @@ void mspacman_state_for_2nd_intermission_patch(void)
   byte bVar2;
   char cVar3;
   byte bVar4;
-  byte in_C;
-  undefined2 uVar5;
   byte index;
-  ushort uVar6;
-  byte *pbVar7;
+  byte in_C;
+  undefined uVar5;
+  undefined2 uVar6;
+  ushort uVar7;
+  byte *pbVar8;
+  short sVar9;
+  char *pcVar10;
+  undefined *puVar11;
+  undefined1 *puVar12;
   byte *lookup_table;
-  short sVar8;
-  char *pcVar9;
-  undefined *puVar10;
-  undefined1 *puVar11;
-  byte **ppbVar12;
-  dereference_word_t dVar13;
+  byte **ppbVar13;
+  dereference_word_t dVar14;
   word *lookup_table_00;
   
   if (intermission_mode != true) {
-    insert_task((word *)&task_core_t_ram_3458);
+                    // WARNING: Return address prevents inlining here
+    insert_task(&task_draw_text_or_graphics);
+    hardware_screen_maze_area[22][4] = 2;
+    BYTE_ARRAY_ARRAY_ram_4440[22][4] = 0x16;
+    intermissions_and_attract_mode_animation_main_routine(0xc);
     return;
   }
   if (false) {
     generate_animations(in_C);
   }
-  uVar6 = CONCAT11(6,in_C);
-  ppbVar12 = animation_current + 5;
+  uVar7 = CONCAT11(6,in_C);
+  ppbVar13 = animation_current + 5;
   do {
-    index = (byte)(uVar6 >> 8);
-    lookup_table = *ppbVar12;
+    uVar5 = (undefined)uVar7;
+    index = (byte)(uVar7 >> 8);
+    lookup_table = *ppbVar13;
     bVar2 = *lookup_table;
     if (bVar2 == 0xf0) {
 intermissions_and_attract_mode_animation_main_routine_animation_code_F0_loop:
       bVar2 = dereference_pointer_to_byte(lookup_table,1);
-      uVar5 = CONCAT11(index,bVar2);
-      dVar13 = dereference_pointer_to_word(WORD_ARRAY_ram_4f2e,index);
-      pbVar7 = (byte *)((uint5)dVar13 >> 8);
-      bVar2 = animation_code_f0_loop_sub_stuff((char)uVar5 + (char)((uint5)dVar13 >> 0x20));
-      *pbVar7 = bVar2;
-      lookup_table_00 = (word *)animation_code_f0_and_f1_sub_stuff(uVar5);
-      dVar13 = dereference_pointer_to_word(lookup_table_00,(byte)((ushort)uVar5 >> 8));
-      index = (byte)((ushort)uVar5 >> 8);
-      *(char *)((uint5)dVar13 >> 8) = (char)((uint5)dVar13 >> 0x20) + (char)uVar5;
+      uVar6 = CONCAT11(index,bVar2);
+      dVar14 = dereference_pointer_to_word(WORD_ARRAY_ram_4f2e,index);
+      pbVar8 = (byte *)((uint5)dVar14 >> 8);
+      bVar2 = animation_code_f0_loop_sub_stuff((char)uVar6 + (char)((uint5)dVar14 >> 0x20));
+      *pbVar8 = bVar2;
+      lookup_table_00 = (word *)animation_code_f0_and_f1_sub_stuff(uVar6);
+      dVar14 = dereference_pointer_to_word(lookup_table_00,(byte)((ushort)uVar6 >> 8));
+      index = (byte)((ushort)uVar6 >> 8);
+      *(char *)((uint5)dVar14 >> 8) = (char)((uint5)dVar14 >> 0x20) + (char)uVar6;
       bVar2 = dereference_pointer_to_byte(lookup_table,2);
-      uVar5 = CONCAT11(index,bVar2);
-      dVar13 = dereference_pointer_to_word(WORD_ARRAY_ram_4f2e,index);
-      sVar8 = (short)((uint5)dVar13 >> 8);
-      bVar2 = animation_code_f0_loop_sub_stuff((char)uVar5 + (char)((uint5)dVar13 >> 0x18));
-      *(byte *)(sVar8 + -1) = bVar2;
-      lookup_table_00 = (word *)animation_code_f0_and_f1_sub_stuff(uVar5);
-      dVar13 = dereference_pointer_to_word(lookup_table_00,(byte)((ushort)uVar5 >> 8));
-      *(char *)((short)((uint5)dVar13 >> 8) + -1) = (char)((uint5)dVar13 >> 0x18) + (char)uVar5;
-      pcVar9 = &DAT_ram_4f0f;
-      index = (byte)((ushort)uVar5 >> 8);
+      uVar6 = CONCAT11(index,bVar2);
+      dVar14 = dereference_pointer_to_word(WORD_ARRAY_ram_4f2e,index);
+      sVar9 = (short)((uint5)dVar14 >> 8);
+      bVar2 = animation_code_f0_loop_sub_stuff((char)uVar6 + (char)((uint5)dVar14 >> 0x18));
+      *(byte *)(sVar9 + -1) = bVar2;
+      lookup_table_00 = (word *)animation_code_f0_and_f1_sub_stuff(uVar6);
+      dVar14 = dereference_pointer_to_word(lookup_table_00,(byte)((ushort)uVar6 >> 8));
+      *(char *)((short)((uint5)dVar14 >> 8) + -1) = (char)((uint5)dVar14 >> 0x18) + (char)uVar6;
+      pcVar10 = &DAT_ram_4f0f;
+      index = (byte)((ushort)uVar6 >> 8);
       bVar2 = dereference_pointer_to_byte(&DAT_ram_4f0f,index);
       cVar3 = bVar2 + 1;
       while( true ) {
-        dVar13 = dereference_pointer_to_word(WORD_ARRAY_ram_4f3e,index);
-        bVar2 = dereference_pointer_to_byte((byte *)((uint5)dVar13 >> 0x18),cVar3 >> 1);
+        dVar14 = dereference_pointer_to_word(WORD_ARRAY_ram_4f3e,index);
+        bVar2 = dereference_pointer_to_byte((byte *)((uint5)dVar14 >> 0x18),cVar3 >> 1);
         if (bVar2 != 0xff) break;
         cVar3 = '\0';
       }
-      *pcVar9 = cVar3;
+      *pcVar10 = cVar3;
       bVar4 = dereference_pointer_to_byte(lookup_table,3);
-      dVar13 = dereference_pointer_to_word(&WORD_ram_4f4e,index);
-      lookup_table = (byte *)((uint5)dVar13 >> 8);
+      dVar14 = dereference_pointer_to_word(&WORD_ram_4f4e,index);
+      lookup_table = (byte *)((uint5)dVar14 >> 8);
       *lookup_table = bVar4;
-      uVar6 = CONCAT11(index,current_player_number);
+      uVar7 = CONCAT11(index,current_player_number);
       if ((cocktail_mode & current_player_number) != 0) {
         bVar2 = bVar2 ^ 0xc0;
       }
       lookup_table[-1] = bVar2;
-      pcVar9 = &animation_cmd_setn;
+      pcVar10 = &animation_cmd_setn;
       bVar2 = dereference_pointer_to_byte(&animation_cmd_setn,index);
-      *pcVar9 = bVar2 - 1;
-      sVar8 = 0;
+      *pcVar10 = bVar2 - 1;
+      sVar9 = 0;
       if ((byte)(bVar2 - 1) == '\0') {
-        sVar8 = 4;
+        sVar9 = 4;
       }
     }
     else {
       if (bVar2 == 0xf1) {
-        lookup_table_00 = (word *)animation_code_f0_and_f1_sub_stuff(uVar6);
-        uVar5 = CONCAT11(lookup_table[1],lookup_table[2]);
+        lookup_table_00 = (word *)animation_code_f0_and_f1_sub_stuff(uVar7);
+        uVar6 = CONCAT11(lookup_table[1],lookup_table[2]);
 intermissions_and_attract_mode_animation_main_routine_cleanup_for_return_from_f0_f1_f3:
-        dVar13 = dereference_pointer_to_word(lookup_table_00,(byte)(uVar6 >> 8));
-        puVar10 = (undefined *)((uint5)dVar13 >> 8);
-        *puVar10 = (char)((ushort)uVar5 >> 8);
-        puVar10[-1] = (char)uVar5;
-        sVar8 = 3;
+        dVar14 = dereference_pointer_to_word(lookup_table_00,(byte)(uVar7 >> 8));
+        puVar11 = (undefined *)((uint5)dVar14 >> 8);
+        *puVar11 = (char)((ushort)uVar6 >> 8);
+        puVar11[-1] = (char)uVar6;
+        sVar9 = 3;
       }
       else {
         if (bVar2 == 0xf2) {
-          uVar1 = uVar6 & 0xff00;
-          uVar6 = uVar1 | lookup_table[1];
-          puVar11 = &animation_cmd_setn;
+          uVar1 = uVar7 & 0xff00;
+          uVar7 = uVar1 | lookup_table[1];
+          puVar12 = &animation_cmd_setn;
           dereference_pointer_to_byte(&animation_cmd_setn,(byte)(uVar1 >> 8));
-          *puVar11 = (char)uVar6;
-          sVar8 = 2;
+          *puVar12 = (char)uVar7;
+          sVar9 = 2;
         }
         else {
           if (bVar2 == 0xf3) {
-            puVar10 = &DAT_ram_4f0f;
+            puVar11 = &DAT_ram_4f0f;
             dereference_pointer_to_byte(&DAT_ram_4f0f,index);
-            *puVar10 = 0;
+            *puVar11 = 0;
             lookup_table_00 = WORD_ARRAY_ram_4f3e;
-            uVar5 = *(undefined2 *)(lookup_table + 1);
+            uVar6 = *(undefined2 *)(lookup_table + 1);
             goto 
             intermissions_and_attract_mode_animation_main_routine_cleanup_for_return_from_f0_f1_f3;
           }
           if (bVar2 == 0xf5) {
             channel_3_effect.num = lookup_table[1];
-            sVar8 = 2;
+            sVar9 = 2;
           }
           else {
             if (bVar2 == 0xf6) {
-              pcVar9 = &animation_cmd_setn;
+              pcVar10 = &animation_cmd_setn;
               bVar2 = dereference_pointer_to_byte(&animation_cmd_setn,index);
-              *pcVar9 = bVar2 - 1;
-              sVar8 = 0;
+              *pcVar10 = bVar2 - 1;
+              sVar9 = 0;
               if ((byte)(bVar2 - 1) == '\0') {
-                sVar8 = 1;
+                sVar9 = 1;
               }
             }
             else {
               if (bVar2 == 0xf7) {
-                insert_task((word *)&draw_space);
-                return;
-              }
-              if (bVar2 == 0xf8) {
-                hardware_video_ram[684] = 0x40;
-                sVar8 = 1;
+                    // WARNING: Return address prevents inlining here
+                insert_task(&task_text_or_graphics_draw_space);
+                uVar7 = CONCAT11(index,uVar5);
+                sVar9 = 1;
               }
               else {
-                if (bVar2 != 0xff) {
-                  halt();
-                  goto intermissions_and_attract_mode_animation_main_routine_animation_code_F0_loop;
+                if (bVar2 == 0xf8) {
+                  hardware_screen_maze_area[22][4] = 0x40;
+                  sVar9 = 1;
                 }
-                puVar11 = &__stack_data_maybe_size_0x14;
-                dereference_pointer_to_byte(&__stack_data_maybe_size_0x14,index);
-                *puVar11 = 1;
-                sVar8 = 0;
-                if ((DAT_ram_4f20 & DAT_ram_4f21 & DAT_ram_4f22 & DAT_ram_4f23 & DAT_ram_4f24 &
-                    DAT_ram_4f25) != 0) {
-                  if (subroutine_DEMO_state == 0) {
-                    add_timed_task(&task_timed_t_ram_2196);
-                    subroutine_PLAYING_state = subroutine_PLAYING_state + 1;
+                else {
+                  if (bVar2 != 0xff) {
+                    halt();
+                    goto 
+                    intermissions_and_attract_mode_animation_main_routine_animation_code_F0_loop;
+                  }
+                  lookup_table = &__stack_data_maybe_size_0x14;
+                  dereference_pointer_to_byte(&__stack_data_maybe_size_0x14,index);
+                  *lookup_table = 1;
+                  sVar9 = 0;
+                  if ((BYTE_ram_4f20 & BYTE_ram_4f21 & BYTE_ram_4f22 & BYTE_ram_4f23 & BYTE_ram_4f24
+                      & BYTE_ram_4f25) != 0) {
+                    if (subroutine_DEMO_state == 0) {
+                    // WARNING: Return address prevents inlining here
+                      add_timed_task(&task_increase_subroutine_PLAYING_state);
+                      subroutine_PLAYING_state = subroutine_PLAYING_state + 1;
+                      return;
+                    }
+                    intermission_mode = false;
+                    TT02_increase_subroutine_DEMO_state();
                     return;
                   }
-                  intermission_mode = false;
-                  TT02_increase_subroutine_DEMO_state();
-                  return;
                 }
               }
             }
@@ -10527,12 +10958,12 @@ intermissions_and_attract_mode_animation_main_routine_cleanup_for_return_from_f0
         }
       }
     }
-    lookup_table = *ppbVar12;
-    *(char *)ppbVar12 = (char)(lookup_table + sVar8);
-    *(undefined *)((short)ppbVar12 + 1) = (char)((ushort)(lookup_table + sVar8) >> 8);
-    ppbVar12 = ppbVar12 + -1;
-    bVar2 = (char)(uVar6 >> 8) - 1;
-    uVar6 = uVar6 & 0xff | (ushort)bVar2 << 8;
+    lookup_table = *ppbVar13;
+    *(char *)ppbVar13 = (char)(lookup_table + sVar9);
+    *(undefined *)((short)ppbVar13 + 1) = (char)((ushort)(lookup_table + sVar9) >> 8);
+    ppbVar13 = ppbVar13 + -1;
+    bVar2 = (char)(uVar7 >> 8) - 1;
+    uVar7 = uVar7 & 0xff | (ushort)bVar2 << 8;
     if (bVar2 == 0) {
       return;
     }
@@ -10551,154 +10982,166 @@ void mspacman_state_for_3rd_intermission_patch(void)
   byte bVar2;
   char cVar3;
   byte bVar4;
-  byte in_C;
-  undefined2 uVar5;
   byte index;
-  ushort uVar6;
-  byte *pbVar7;
+  byte in_C;
+  undefined uVar5;
+  undefined2 uVar6;
+  ushort uVar7;
+  byte *pbVar8;
+  short sVar9;
+  char *pcVar10;
+  undefined *puVar11;
+  undefined1 *puVar12;
   byte *lookup_table;
-  short sVar8;
-  char *pcVar9;
-  undefined *puVar10;
-  undefined1 *puVar11;
-  byte **ppbVar12;
-  dereference_word_t dVar13;
+  byte **ppbVar13;
+  dereference_word_t dVar14;
   word *lookup_table_00;
   
   if (intermission_mode != true) {
-    insert_task((word *)&task_core_t_ram_3472);
+                    // WARNING: Return address prevents inlining here
+    insert_task(&task_draw_text_or_graphics);
+    hardware_screen_maze_area[22][4] = 3;
+    BYTE_ARRAY_ARRAY_ram_4440[22][4] = 0x16;
+    intermissions_and_attract_mode_animation_main_routine(0x18);
     return;
   }
   if (false) {
     generate_animations(in_C);
   }
-  uVar6 = CONCAT11(6,in_C);
-  ppbVar12 = animation_current + 5;
+  uVar7 = CONCAT11(6,in_C);
+  ppbVar13 = animation_current + 5;
   do {
-    index = (byte)(uVar6 >> 8);
-    lookup_table = *ppbVar12;
+    uVar5 = (undefined)uVar7;
+    index = (byte)(uVar7 >> 8);
+    lookup_table = *ppbVar13;
     bVar2 = *lookup_table;
     if (bVar2 == 0xf0) {
 intermissions_and_attract_mode_animation_main_routine_animation_code_F0_loop:
       bVar2 = dereference_pointer_to_byte(lookup_table,1);
-      uVar5 = CONCAT11(index,bVar2);
-      dVar13 = dereference_pointer_to_word(WORD_ARRAY_ram_4f2e,index);
-      pbVar7 = (byte *)((uint5)dVar13 >> 8);
-      bVar2 = animation_code_f0_loop_sub_stuff((char)uVar5 + (char)((uint5)dVar13 >> 0x20));
-      *pbVar7 = bVar2;
-      lookup_table_00 = (word *)animation_code_f0_and_f1_sub_stuff(uVar5);
-      dVar13 = dereference_pointer_to_word(lookup_table_00,(byte)((ushort)uVar5 >> 8));
-      index = (byte)((ushort)uVar5 >> 8);
-      *(char *)((uint5)dVar13 >> 8) = (char)((uint5)dVar13 >> 0x20) + (char)uVar5;
+      uVar6 = CONCAT11(index,bVar2);
+      dVar14 = dereference_pointer_to_word(WORD_ARRAY_ram_4f2e,index);
+      pbVar8 = (byte *)((uint5)dVar14 >> 8);
+      bVar2 = animation_code_f0_loop_sub_stuff((char)uVar6 + (char)((uint5)dVar14 >> 0x20));
+      *pbVar8 = bVar2;
+      lookup_table_00 = (word *)animation_code_f0_and_f1_sub_stuff(uVar6);
+      dVar14 = dereference_pointer_to_word(lookup_table_00,(byte)((ushort)uVar6 >> 8));
+      index = (byte)((ushort)uVar6 >> 8);
+      *(char *)((uint5)dVar14 >> 8) = (char)((uint5)dVar14 >> 0x20) + (char)uVar6;
       bVar2 = dereference_pointer_to_byte(lookup_table,2);
-      uVar5 = CONCAT11(index,bVar2);
-      dVar13 = dereference_pointer_to_word(WORD_ARRAY_ram_4f2e,index);
-      sVar8 = (short)((uint5)dVar13 >> 8);
-      bVar2 = animation_code_f0_loop_sub_stuff((char)uVar5 + (char)((uint5)dVar13 >> 0x18));
-      *(byte *)(sVar8 + -1) = bVar2;
-      lookup_table_00 = (word *)animation_code_f0_and_f1_sub_stuff(uVar5);
-      dVar13 = dereference_pointer_to_word(lookup_table_00,(byte)((ushort)uVar5 >> 8));
-      *(char *)((short)((uint5)dVar13 >> 8) + -1) = (char)((uint5)dVar13 >> 0x18) + (char)uVar5;
-      pcVar9 = &DAT_ram_4f0f;
-      index = (byte)((ushort)uVar5 >> 8);
+      uVar6 = CONCAT11(index,bVar2);
+      dVar14 = dereference_pointer_to_word(WORD_ARRAY_ram_4f2e,index);
+      sVar9 = (short)((uint5)dVar14 >> 8);
+      bVar2 = animation_code_f0_loop_sub_stuff((char)uVar6 + (char)((uint5)dVar14 >> 0x18));
+      *(byte *)(sVar9 + -1) = bVar2;
+      lookup_table_00 = (word *)animation_code_f0_and_f1_sub_stuff(uVar6);
+      dVar14 = dereference_pointer_to_word(lookup_table_00,(byte)((ushort)uVar6 >> 8));
+      *(char *)((short)((uint5)dVar14 >> 8) + -1) = (char)((uint5)dVar14 >> 0x18) + (char)uVar6;
+      pcVar10 = &DAT_ram_4f0f;
+      index = (byte)((ushort)uVar6 >> 8);
       bVar2 = dereference_pointer_to_byte(&DAT_ram_4f0f,index);
       cVar3 = bVar2 + 1;
       while( true ) {
-        dVar13 = dereference_pointer_to_word(WORD_ARRAY_ram_4f3e,index);
-        bVar2 = dereference_pointer_to_byte((byte *)((uint5)dVar13 >> 0x18),cVar3 >> 1);
+        dVar14 = dereference_pointer_to_word(WORD_ARRAY_ram_4f3e,index);
+        bVar2 = dereference_pointer_to_byte((byte *)((uint5)dVar14 >> 0x18),cVar3 >> 1);
         if (bVar2 != 0xff) break;
         cVar3 = '\0';
       }
-      *pcVar9 = cVar3;
+      *pcVar10 = cVar3;
       bVar4 = dereference_pointer_to_byte(lookup_table,3);
-      dVar13 = dereference_pointer_to_word(&WORD_ram_4f4e,index);
-      lookup_table = (byte *)((uint5)dVar13 >> 8);
+      dVar14 = dereference_pointer_to_word(&WORD_ram_4f4e,index);
+      lookup_table = (byte *)((uint5)dVar14 >> 8);
       *lookup_table = bVar4;
-      uVar6 = CONCAT11(index,current_player_number);
+      uVar7 = CONCAT11(index,current_player_number);
       if ((cocktail_mode & current_player_number) != 0) {
         bVar2 = bVar2 ^ 0xc0;
       }
       lookup_table[-1] = bVar2;
-      pcVar9 = &animation_cmd_setn;
+      pcVar10 = &animation_cmd_setn;
       bVar2 = dereference_pointer_to_byte(&animation_cmd_setn,index);
-      *pcVar9 = bVar2 - 1;
-      sVar8 = 0;
+      *pcVar10 = bVar2 - 1;
+      sVar9 = 0;
       if ((byte)(bVar2 - 1) == '\0') {
-        sVar8 = 4;
+        sVar9 = 4;
       }
     }
     else {
       if (bVar2 == 0xf1) {
-        lookup_table_00 = (word *)animation_code_f0_and_f1_sub_stuff(uVar6);
-        uVar5 = CONCAT11(lookup_table[1],lookup_table[2]);
+        lookup_table_00 = (word *)animation_code_f0_and_f1_sub_stuff(uVar7);
+        uVar6 = CONCAT11(lookup_table[1],lookup_table[2]);
 intermissions_and_attract_mode_animation_main_routine_cleanup_for_return_from_f0_f1_f3:
-        dVar13 = dereference_pointer_to_word(lookup_table_00,(byte)(uVar6 >> 8));
-        puVar10 = (undefined *)((uint5)dVar13 >> 8);
-        *puVar10 = (char)((ushort)uVar5 >> 8);
-        puVar10[-1] = (char)uVar5;
-        sVar8 = 3;
+        dVar14 = dereference_pointer_to_word(lookup_table_00,(byte)(uVar7 >> 8));
+        puVar11 = (undefined *)((uint5)dVar14 >> 8);
+        *puVar11 = (char)((ushort)uVar6 >> 8);
+        puVar11[-1] = (char)uVar6;
+        sVar9 = 3;
       }
       else {
         if (bVar2 == 0xf2) {
-          uVar1 = uVar6 & 0xff00;
-          uVar6 = uVar1 | lookup_table[1];
-          puVar11 = &animation_cmd_setn;
+          uVar1 = uVar7 & 0xff00;
+          uVar7 = uVar1 | lookup_table[1];
+          puVar12 = &animation_cmd_setn;
           dereference_pointer_to_byte(&animation_cmd_setn,(byte)(uVar1 >> 8));
-          *puVar11 = (char)uVar6;
-          sVar8 = 2;
+          *puVar12 = (char)uVar7;
+          sVar9 = 2;
         }
         else {
           if (bVar2 == 0xf3) {
-            puVar10 = &DAT_ram_4f0f;
+            puVar11 = &DAT_ram_4f0f;
             dereference_pointer_to_byte(&DAT_ram_4f0f,index);
-            *puVar10 = 0;
+            *puVar11 = 0;
             lookup_table_00 = WORD_ARRAY_ram_4f3e;
-            uVar5 = *(undefined2 *)(lookup_table + 1);
+            uVar6 = *(undefined2 *)(lookup_table + 1);
             goto 
             intermissions_and_attract_mode_animation_main_routine_cleanup_for_return_from_f0_f1_f3;
           }
           if (bVar2 == 0xf5) {
             channel_3_effect.num = lookup_table[1];
-            sVar8 = 2;
+            sVar9 = 2;
           }
           else {
             if (bVar2 == 0xf6) {
-              pcVar9 = &animation_cmd_setn;
+              pcVar10 = &animation_cmd_setn;
               bVar2 = dereference_pointer_to_byte(&animation_cmd_setn,index);
-              *pcVar9 = bVar2 - 1;
-              sVar8 = 0;
+              *pcVar10 = bVar2 - 1;
+              sVar9 = 0;
               if ((byte)(bVar2 - 1) == '\0') {
-                sVar8 = 1;
+                sVar9 = 1;
               }
             }
             else {
               if (bVar2 == 0xf7) {
-                insert_task((word *)&draw_space);
-                return;
-              }
-              if (bVar2 == 0xf8) {
-                hardware_video_ram[684] = 0x40;
-                sVar8 = 1;
+                    // WARNING: Return address prevents inlining here
+                insert_task(&task_text_or_graphics_draw_space);
+                uVar7 = CONCAT11(index,uVar5);
+                sVar9 = 1;
               }
               else {
-                if (bVar2 != 0xff) {
-                  halt();
-                  goto intermissions_and_attract_mode_animation_main_routine_animation_code_F0_loop;
+                if (bVar2 == 0xf8) {
+                  hardware_screen_maze_area[22][4] = 0x40;
+                  sVar9 = 1;
                 }
-                puVar11 = &__stack_data_maybe_size_0x14;
-                dereference_pointer_to_byte(&__stack_data_maybe_size_0x14,index);
-                *puVar11 = 1;
-                sVar8 = 0;
-                if ((DAT_ram_4f20 & DAT_ram_4f21 & DAT_ram_4f22 & DAT_ram_4f23 & DAT_ram_4f24 &
-                    DAT_ram_4f25) != 0) {
-                  if (subroutine_DEMO_state == 0) {
-                    add_timed_task(&task_timed_t_ram_2196);
-                    subroutine_PLAYING_state = subroutine_PLAYING_state + 1;
+                else {
+                  if (bVar2 != 0xff) {
+                    halt();
+                    goto 
+                    intermissions_and_attract_mode_animation_main_routine_animation_code_F0_loop;
+                  }
+                  lookup_table = &__stack_data_maybe_size_0x14;
+                  dereference_pointer_to_byte(&__stack_data_maybe_size_0x14,index);
+                  *lookup_table = 1;
+                  sVar9 = 0;
+                  if ((BYTE_ram_4f20 & BYTE_ram_4f21 & BYTE_ram_4f22 & BYTE_ram_4f23 & BYTE_ram_4f24
+                      & BYTE_ram_4f25) != 0) {
+                    if (subroutine_DEMO_state == 0) {
+                    // WARNING: Return address prevents inlining here
+                      add_timed_task(&task_increase_subroutine_PLAYING_state);
+                      subroutine_PLAYING_state = subroutine_PLAYING_state + 1;
+                      return;
+                    }
+                    intermission_mode = false;
+                    TT02_increase_subroutine_DEMO_state();
                     return;
                   }
-                  intermission_mode = false;
-                  TT02_increase_subroutine_DEMO_state();
-                  return;
                 }
               }
             }
@@ -10706,12 +11149,12 @@ intermissions_and_attract_mode_animation_main_routine_cleanup_for_return_from_f0
         }
       }
     }
-    lookup_table = *ppbVar12;
-    *(char *)ppbVar12 = (char)(lookup_table + sVar8);
-    *(undefined *)((short)ppbVar12 + 1) = (char)((ushort)(lookup_table + sVar8) >> 8);
-    ppbVar12 = ppbVar12 + -1;
-    bVar2 = (char)(uVar6 >> 8) - 1;
-    uVar6 = uVar6 & 0xff | (ushort)bVar2 << 8;
+    lookup_table = *ppbVar13;
+    *(char *)ppbVar13 = (char)(lookup_table + sVar9);
+    *(undefined *)((short)ppbVar13 + 1) = (char)((ushort)(lookup_table + sVar9) >> 8);
+    ppbVar13 = ppbVar13 + -1;
+    bVar2 = (char)(uVar7 >> 8) - 1;
+    uVar7 = uVar7 & 0xff | (ushort)bVar2 << 8;
     if (bVar2 == 0) {
       return;
     }
@@ -10789,89 +11232,91 @@ void intermissions_and_attract_mode_animation_main_routine(byte word_intermissio
   byte animation_code;
   char cVar2;
   byte bVar3;
-  undefined2 uVar4;
   byte index;
-  ushort uVar5;
-  byte *pbVar6;
+  undefined uVar4;
+  undefined2 uVar5;
+  ushort uVar6;
+  byte *pbVar7;
+  short sVar8;
+  char *pcVar9;
+  undefined *puVar10;
+  undefined1 *puVar11;
   byte *lookup_table;
-  short sVar7;
-  char *pcVar8;
-  undefined *puVar9;
-  undefined1 *puVar10;
-  byte **ppbVar11;
-  dereference_word_t dVar12;
+  byte **ppbVar12;
+  dereference_word_t dVar13;
   word *lookup_table_00;
   
   if (intermission_mode == false) {
     generate_animations(word_intermission_index);
   }
-  uVar5 = CONCAT11(6,word_intermission_index);
-  ppbVar11 = animation_current + 5;
+  uVar6 = CONCAT11(6,word_intermission_index);
+  ppbVar12 = animation_current + 5;
   do {
                     // get the next ANIMATION code.. (codes return to here when done)
                     // 
-    index = (byte)(uVar5 >> 8);
-    lookup_table = *ppbVar11;
+    uVar4 = (undefined)uVar6;
+    index = (byte)(uVar6 >> 8);
+    lookup_table = *ppbVar12;
     animation_code = *lookup_table;
     if (animation_code == 0xf0) {
 animation_code_F0_loop:
                     // for value == #F0 - LOOP
                     // 
       animation_code = dereference_pointer_to_byte(lookup_table,1);
-      uVar4 = CONCAT11(index,animation_code);
-      dVar12 = dereference_pointer_to_word(WORD_ARRAY_ram_4f2e,index);
-      pbVar6 = (byte *)((uint5)dVar12 >> 8);
-      animation_code = animation_code_f0_loop_sub_stuff((char)uVar4 + (char)((uint5)dVar12 >> 0x20))
+      uVar5 = CONCAT11(index,animation_code);
+      dVar13 = dereference_pointer_to_word(WORD_ARRAY_ram_4f2e,index);
+      pbVar7 = (byte *)((uint5)dVar13 >> 8);
+      animation_code = animation_code_f0_loop_sub_stuff((char)uVar5 + (char)((uint5)dVar13 >> 0x20))
       ;
-      *pbVar6 = animation_code;
-      lookup_table_00 = (word *)animation_code_f0_and_f1_sub_stuff(uVar4);
-      dVar12 = dereference_pointer_to_word(lookup_table_00,(byte)((ushort)uVar4 >> 8));
-      index = (byte)((ushort)uVar4 >> 8);
-      *(char *)((uint5)dVar12 >> 8) = (char)((uint5)dVar12 >> 0x20) + (char)uVar4;
+      *pbVar7 = animation_code;
+      lookup_table_00 = (word *)animation_code_f0_and_f1_sub_stuff(uVar5);
+      dVar13 = dereference_pointer_to_word(lookup_table_00,(byte)((ushort)uVar5 >> 8));
+      index = (byte)((ushort)uVar5 >> 8);
+      *(char *)((uint5)dVar13 >> 8) = (char)((uint5)dVar13 >> 0x20) + (char)uVar5;
       animation_code = dereference_pointer_to_byte(lookup_table,2);
-      uVar4 = CONCAT11(index,animation_code);
-      dVar12 = dereference_pointer_to_word(WORD_ARRAY_ram_4f2e,index);
-      sVar7 = (short)((uint5)dVar12 >> 8);
-      animation_code = animation_code_f0_loop_sub_stuff((char)uVar4 + (char)((uint5)dVar12 >> 0x18))
+      uVar5 = CONCAT11(index,animation_code);
+      dVar13 = dereference_pointer_to_word(WORD_ARRAY_ram_4f2e,index);
+      sVar8 = (short)((uint5)dVar13 >> 8);
+      animation_code = animation_code_f0_loop_sub_stuff((char)uVar5 + (char)((uint5)dVar13 >> 0x18))
       ;
-      *(byte *)(sVar7 + -1) = animation_code;
-      lookup_table_00 = (word *)animation_code_f0_and_f1_sub_stuff(uVar4);
-      dVar12 = dereference_pointer_to_word(lookup_table_00,(byte)((ushort)uVar4 >> 8));
-      *(char *)((short)((uint5)dVar12 >> 8) + -1) = (char)((uint5)dVar12 >> 0x18) + (char)uVar4;
-      pcVar8 = &DAT_ram_4f0f;
-      index = (byte)((ushort)uVar4 >> 8);
+      *(byte *)(sVar8 + -1) = animation_code;
+      lookup_table_00 = (word *)animation_code_f0_and_f1_sub_stuff(uVar5);
+      dVar13 = dereference_pointer_to_word(lookup_table_00,(byte)((ushort)uVar5 >> 8));
+      *(char *)((short)((uint5)dVar13 >> 8) + -1) = (char)((uint5)dVar13 >> 0x18) + (char)uVar5;
+      pcVar9 = &DAT_ram_4f0f;
+      index = (byte)((ushort)uVar5 >> 8);
       animation_code = dereference_pointer_to_byte(&DAT_ram_4f0f,index);
       cVar2 = animation_code + 1;
       while( true ) {
-        dVar12 = dereference_pointer_to_word(WORD_ARRAY_ram_4f3e,index);
-        animation_code = dereference_pointer_to_byte((byte *)((uint5)dVar12 >> 0x18),cVar2 >> 1);
+        dVar13 = dereference_pointer_to_word(WORD_ARRAY_ram_4f3e,index);
+        animation_code = dereference_pointer_to_byte((byte *)((uint5)dVar13 >> 0x18),cVar2 >> 1);
         if (animation_code != 0xff) break;
         cVar2 = '\0';
       }
-      *pcVar8 = cVar2;
+      *pcVar9 = cVar2;
       bVar3 = dereference_pointer_to_byte(lookup_table,3);
-      dVar12 = dereference_pointer_to_word(&WORD_ram_4f4e,index);
-      lookup_table = (byte *)((uint5)dVar12 >> 8);
+      dVar13 = dereference_pointer_to_word(&WORD_ram_4f4e,index);
+      lookup_table = (byte *)((uint5)dVar13 >> 8);
       *lookup_table = bVar3;
-      uVar5 = CONCAT11(index,current_player_number);
+      uVar6 = CONCAT11(index,current_player_number);
       if ((cocktail_mode & current_player_number) != 0) {
         animation_code = animation_code ^ 0xc0;
       }
       lookup_table[-1] = animation_code;
-      pcVar8 = &animation_cmd_setn;
+      pcVar9 = &animation_cmd_setn;
       animation_code = dereference_pointer_to_byte(&animation_cmd_setn,index);
-      *pcVar8 = animation_code - 1;
-      sVar7 = 0;
+      *pcVar9 = animation_code - 1;
+      sVar8 = 0;
       if ((byte)(animation_code - 1) == '\0') {
-        sVar7 = 4;
+        sVar8 = 4;
       }
     }
     else {
       if (animation_code == 0xf1) {
                     // for value == #F1 - SETPOS
                     // 
-        lookup_table_00 = (word *)animation_code_f0_and_f1_sub_stuff(uVar5);
-        uVar4 = CONCAT11(lookup_table[1],lookup_table[2]);
+        lookup_table_00 = (word *)animation_code_f0_and_f1_sub_stuff(uVar6);
+        uVar5 = CONCAT11(lookup_table[1],lookup_table[2]);
 cleanup_for_return_from_f0_f1_f3:
                     // It's my gyess that the jr at 3588 and the lack of code #F4
                     // are related.  In fitting with the style of the other F-commands,
@@ -10880,86 +11325,91 @@ cleanup_for_return_from_f0_f1_f3:
                     // was, but forgot to erase the jr just before it, so you end up with
                     // a jr to the next instruction.  -scott
                     // 
-        dVar12 = dereference_pointer_to_word(lookup_table_00,(byte)(uVar5 >> 8));
-        puVar9 = (undefined *)((uint5)dVar12 >> 8);
-        *puVar9 = (char)((ushort)uVar4 >> 8);
-        puVar9[-1] = (char)uVar4;
-        sVar7 = 3;
+        dVar13 = dereference_pointer_to_word(lookup_table_00,(byte)(uVar6 >> 8));
+        puVar10 = (undefined *)((uint5)dVar13 >> 8);
+        *puVar10 = (char)((ushort)uVar5 >> 8);
+        puVar10[-1] = (char)uVar5;
+        sVar8 = 3;
       }
       else {
         if (animation_code == 0xf2) {
                     // for value = #F2 - SETN
                     // 
-          uVar1 = uVar5 & 0xff00;
-          uVar5 = uVar1 | lookup_table[1];
-          puVar10 = &animation_cmd_setn;
+          uVar1 = uVar6 & 0xff00;
+          uVar6 = uVar1 | lookup_table[1];
+          puVar11 = &animation_cmd_setn;
           dereference_pointer_to_byte(&animation_cmd_setn,(byte)(uVar1 >> 8));
-          *puVar10 = (char)uVar5;
-          sVar7 = 2;
+          *puVar11 = (char)uVar6;
+          sVar8 = 2;
         }
         else {
           if (animation_code == 0xf3) {
                     // for value == #F3 - SETCHAR
                     // 
-            puVar9 = &DAT_ram_4f0f;
+            puVar10 = &DAT_ram_4f0f;
             dereference_pointer_to_byte(&DAT_ram_4f0f,index);
-            *puVar9 = 0;
+            *puVar10 = 0;
             lookup_table_00 = WORD_ARRAY_ram_4f3e;
-            uVar4 = *(undefined2 *)(lookup_table + 1);
+            uVar5 = *(undefined2 *)(lookup_table + 1);
             goto cleanup_for_return_from_f0_f1_f3;
           }
           if (animation_code == 0xf5) {
                     // for value == #F5 - PLAYSOUND
                     // 
             channel_3_effect.num = lookup_table[1];
-            sVar7 = 2;
+            sVar8 = 2;
           }
           else {
             if (animation_code == 0xf6) {
                     // for value == #F6 - PAUSE
                     // 
-              pcVar8 = &animation_cmd_setn;
+              pcVar9 = &animation_cmd_setn;
               animation_code = dereference_pointer_to_byte(&animation_cmd_setn,index);
-              *pcVar8 = animation_code - 1;
-              sVar7 = 0;
+              *pcVar9 = animation_code - 1;
+              sVar8 = 0;
               if ((byte)(animation_code - 1) == '\0') {
-                sVar7 = 1;
+                sVar8 = 1;
               }
             }
             else {
               if (animation_code == 0xf7) {
                     // for value == #F7 - SHOWACT ?
                     // 
-                insert_task((word *)&draw_space);
-                return;
-              }
-              if (animation_code == 0xf8) {
-                    // for value == #F8 - CLEARACT
-                    // 
-                hardware_video_ram[684] = 0x40;
-                sVar7 = 1;
+                    // WARNING: Return address prevents inlining here
+                insert_task(&task_text_or_graphics_draw_space);
+                uVar6 = CONCAT11(index,uVar4);
+                sVar8 = 1;
               }
               else {
-                if (animation_code != 0xff) {
-                  halt();
-                  goto animation_code_F0_loop;
+                if (animation_code == 0xf8) {
+                    // for value == #F8 - CLEARACT
+                    // 
+                  hardware_screen_maze_area[22][4] = 0x40;
+                  sVar8 = 1;
                 }
+                else {
+                  if (animation_code != 0xff) {
+                    halt();
+                    goto animation_code_F0_loop;
+                  }
                     // for value == #FF (end code)
                     // 
-                puVar10 = &__stack_data_maybe_size_0x14;
-                dereference_pointer_to_byte(&__stack_data_maybe_size_0x14,index);
-                *puVar10 = 1;
-                sVar7 = 0;
-                if ((DAT_ram_4f20 & DAT_ram_4f21 & DAT_ram_4f22 & DAT_ram_4f23 & DAT_ram_4f24 &
-                    DAT_ram_4f25) != 0) {
-                  if (subroutine_DEMO_state == 0) {
-                    add_timed_task(&task_timed_t_ram_2196);
-                    subroutine_PLAYING_state = subroutine_PLAYING_state + 1;
+                  lookup_table = &__stack_data_maybe_size_0x14;
+                  dereference_pointer_to_byte(&__stack_data_maybe_size_0x14,index);
+                  *lookup_table = 1;
+                  sVar8 = 0;
+                  if ((BYTE_ram_4f20 & BYTE_ram_4f21 & BYTE_ram_4f22 & BYTE_ram_4f23 & BYTE_ram_4f24
+                      & BYTE_ram_4f25) != 0) {
+                    if (subroutine_DEMO_state == 0) {
+                    // WARNING: Return address prevents inlining here
+                      add_timed_task(&task_increase_subroutine_PLAYING_state);
+                      subroutine_PLAYING_state = subroutine_PLAYING_state + 1;
+                      return;
+                    }
+                    intermission_mode = false;
+                    TT02_increase_subroutine_DEMO_state();
                     return;
                   }
-                  intermission_mode = false;
-                  TT02_increase_subroutine_DEMO_state();
-                  return;
                 }
               }
             }
@@ -10973,12 +11423,12 @@ cleanup_for_return_from_f0_f1_f3:
                     // original pac rom:
                     // data - level pill information
                     // 
-    lookup_table = *ppbVar11;
-    *(char *)ppbVar11 = (char)(lookup_table + sVar7);
-    *(undefined *)((short)ppbVar11 + 1) = (char)((ushort)(lookup_table + sVar7) >> 8);
-    ppbVar11 = ppbVar11 + -1;
-    animation_code = (char)(uVar5 >> 8) - 1;
-    uVar5 = uVar5 & 0xff | (ushort)animation_code << 8;
+    lookup_table = *ppbVar12;
+    *(char *)ppbVar12 = (char)(lookup_table + sVar8);
+    *(undefined *)((short)ppbVar12 + 1) = (char)((ushort)(lookup_table + sVar8) >> 8);
+    ppbVar12 = ppbVar12 + -1;
+    animation_code = (char)(uVar6 >> 8) - 1;
+    uVar6 = uVar6 & 0xff | (ushort)animation_code << 8;
     if (animation_code == 0) {
       return;
     }
@@ -11047,20 +11497,25 @@ word animation_code_f0_and_f1_sub_stuff(undefined2 param_1)
 
 
 
-void mspacman_select_song(undefined2 param_1,word *param_2,byte *param_3,short param_4)
+void mspacman_select_song(ushort param_1,word *param_2,byte *param_3,short param_4)
 
 {
-  byte index;
   byte bVar1;
   char cVar2;
   undefined uVar3;
-  byte *pbVar4;
-  ushort uVar5;
-  dereference_word_t dVar6;
+  byte index;
+  ushort uVar4;
+  byte *pbVar5;
+  undefined *puVar6;
+  dereference_word_t dVar7;
+  undefined2 uStack4;
+  ushort uStack2;
   
+  index = (char)(param_1 >> 8) - 1;
+  uStack2 = param_1 & 0xff | (ushort)index << 8;
                     // adapt B to the current level to find out the song number
                     // 
-  if ((char)((ushort)param_1 >> 8) == '\x02') {
+  if (index == 1) {
     index = 1;
     if ((current_level != 1) && (index = 2, current_level != 4)) {
       index = 3;
@@ -11069,15 +11524,21 @@ void mspacman_select_song(undefined2 param_1,word *param_2,byte *param_3,short p
   else {
     index = 0;
   }
-  dVar6 = dereference_pointer_to_word(param_2,index);
-  pbVar4 = (byte *)((uint5)dVar6 >> 0x18);
-  index = *pbVar4;
-  pbVar4 = pbVar4 + 1;
-  *(undefined *)(param_4 + 6) = (char)pbVar4;
-  *(undefined *)(param_4 + 7) = (char)((ushort)pbVar4 >> 8);
-  if (0xef < index) {
-    jump_table((undefined *)wave_cmd_fn_table,index & 0xf);
-    return;
+  uStack4 = 0x366b;
+  dVar7 = dereference_pointer_to_word(param_2,index);
+  pbVar5 = (byte *)((uint5)dVar7 >> 0x18);
+  puVar6 = (undefined *)register0x44;
+  while( true ) {
+    index = *pbVar5;
+    *(undefined *)(param_4 + 6) = (char)(pbVar5 + 1);
+    *(undefined *)(param_4 + 7) = (char)((ushort)(pbVar5 + 1) >> 8);
+    if (index < 0xf0) break;
+    *(undefined2 *)(puVar6 + -2) = 0x2d6c;
+                    // WARNING: Return address prevents inlining here
+    *(undefined2 *)(puVar6 + -4) = 0x2d85;
+    jump_table_fn(*(undefined **)(puVar6 + -4),index & 0xf);
+    pbVar5 = *(byte **)(param_4 + 6);
+    puVar6 = puVar6 + -2;
   }
                     //  process regular byte (A=byte to process, it's not a special byte)
                     // 
@@ -11089,30 +11550,32 @@ void mspacman_select_song(undefined2 param_1,word *param_2,byte *param_3,short p
     uVar3 = 0;
   }
   *(undefined *)(param_4 + 0xf) = uVar3;
+  *(undefined2 *)(puVar6 + -2) = 0x2dc6;
   bVar1 = dereference_pointer_to_byte
                     (song_lookup_tables,
                      ((index >> 7) << 1 | (index << 1) >> 7) << 1 |
-                     ((index << 1 | index >> 7) << 1) >> 7);
+                     ((index << 1 | index >> 7) << 1) >> 7,puVar6[-2]);
                     // Note: this is just A = 2**A
                     // 
   *(byte *)(param_4 + 0xc) = bVar1;
   if ((index & 0x1f) != 0) {
-    index = dereference_pointer_to_byte(BYTE_ARRAY_ARRAY_ram_3bb8,index & 0xf);
+    *(undefined2 *)(puVar6 + -2) = 0x2dd4;
+    index = dereference_pointer_to_byte(BYTE_ARRAY_ARRAY_ram_3bb8,index & 0xf,puVar6[-2]);
     *(byte *)(param_4 + 0xe) = index;
   }
                     //  compute wave frequency
                     // 
-  uVar5 = (ushort)*(byte *)(param_4 + 0xe);
+  uVar4 = (ushort)*(byte *)(param_4 + 0xe);
   index = *(byte *)(param_4 + 0xd) & 0x10;
   if (index != 0) {
     index = 1;
   }
   cVar2 = index + *(char *)(param_4 + 4);
   while (cVar2 != '\0') {
-    uVar5 = uVar5 * 2;
+    uVar4 = uVar4 * 2;
     cVar2 = cVar2 + -1;
   }
-  bVar1 = (byte)uVar5;
+  bVar1 = (byte)uVar4;
                     // HL = HL * 2**B
                     // now extract the nibbles from HL
                     // 
@@ -11120,12 +11583,15 @@ void mspacman_select_song(undefined2 param_1,word *param_2,byte *param_3,short p
   index = bVar1 >> 1;
   param_3[1] = (((index | bVar1 << 7) >> 1 | index << 7) >> 1 | ((index & 2) >> 1) << 7) >> 1 |
                ((index & 4) >> 2) << 7;
-  bVar1 = (byte)(uVar5 >> 8);
+  bVar1 = (byte)(uVar4 >> 8);
   param_3[2] = bVar1;
   index = bVar1 >> 1;
   param_3[3] = (((index | bVar1 << 7) >> 1 | index << 7) >> 1 | ((index & 2) >> 1) << 7) >> 1 |
                ((index & 4) >> 2) << 7;
-  jump_table((undefined *)effect_fn_table,*(byte *)(param_4 + 0xb));
+  index = *(byte *)(param_4 + 0xb);
+                    // WARNING: Return address prevents inlining here
+  *(undefined2 *)(puVar6 + -2) = 0x2f02;
+  jump_table_fn(*(undefined **)(puVar6 + -2),index);
   return;
 }
 
@@ -11171,7 +11637,7 @@ void draw_easter_egg__Made_By_Namco(void)
                     //  ; Draw the "Made By Namco" text (egg)
                     // 
                     // 
-  pbVar6 = hardware_video_ram + 0xa2;
+  pbVar6 = hardware_screen_maze_area + 0x62;
   pbVar4 = easter_egg__namco;
   while( true ) {
     *pbVar6 = 0x14;
@@ -11200,7 +11666,8 @@ void execute_DEMO_task_state_patch(void)
   if (subroutine_DEMO_state != 0x10) {
     flashing_bulbs_around_the_marquee();
   }
-  jump_table((undefined *)demo_mode_fn_table,subroutine_DEMO_state);
+                    // WARNING: Return address prevents inlining here
+  jump_table_fn((undefined *)demo_mode_fn_table,subroutine_DEMO_state);
   return;
 }
 
@@ -11209,9 +11676,12 @@ void execute_DEMO_task_state_patch(void)
 void demo_mode_display_MS_pacman(void)
 
 {
+                    // WARNING: Return address prevents inlining here
                     // arrive here from #3E67 when sub# == 2
                     // 
-  insert_task((word *)&task_core_t_ram_3e8c);
+  insert_task(&task_draw_text_or_graphics_ms_pacman);
+  _STACK_START = 0x60;
+  TT02_increase_subroutine_DEMO_state();
   return;
 }
 
@@ -11232,7 +11702,9 @@ void demo_mode_draw_the_midway_logo_and_copyright(void)
 void demo_mode_display_Blinky(void)
 
 {
-  insert_task((word *)&task_core_t_ram_3e9d);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_draw_text_or_graphics_blinky);
+  TT02_increase_subroutine_DEMO_state();
   return;
 }
 
@@ -11241,7 +11713,11 @@ void demo_mode_display_Blinky(void)
 void demo_mode_clear_with_display_Pinky(char param_1)
 
 {
-  insert_task((word *)&task_core_t_ram_3ea3);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_draw_text_or_graphics_space);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_draw_text_or_graphics_pinky);
+  TT02_increase_subroutine_DEMO_state();
   return;
 }
 
@@ -11250,7 +11726,9 @@ void demo_mode_clear_with_display_Pinky(char param_1)
 void demo_mode_display_Inky(void)
 
 {
-  insert_task((word *)&task_core_t_ram_3eac);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_draw_text_or_graphics_inky);
+  TT02_increase_subroutine_DEMO_state();
   return;
 }
 
@@ -11259,7 +11737,9 @@ void demo_mode_display_Inky(void)
 void demo_mode_display_Sue(void)
 
 {
-  insert_task((word *)&task_core_t_ram_3eb2);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_draw_text_or_graphics_sue);
+  TT02_increase_subroutine_DEMO_state();
   return;
 }
 
@@ -11268,7 +11748,9 @@ void demo_mode_display_Sue(void)
 void demo_mode_display_Ms_pacman(void)
 
 {
-  insert_task((word *)&task_core_t_ram_3eb8);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_draw_text_or_graphics_ms_pac_man);
+  TT02_increase_subroutine_DEMO_state();
   return;
 }
 
@@ -11277,7 +11759,9 @@ void demo_mode_display_Ms_pacman(void)
 void demo_mode_display_with(void)
 
 {
-  insert_task((word *)&task_core_t_ram_3ebe);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_draw_text_or_graphics_with);
+  TT02_increase_subroutine_DEMO_state();
   return;
 }
 
@@ -11286,7 +11770,9 @@ void demo_mode_display_with(void)
 void demo_mode_display_Starring(undefined2 param_1)
 
 {
-  insert_task((word *)&task_core_t_ram_3ec4);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_draw_text_or_graphics_starring);
+  TT02_increase_subroutine_DEMO_state();
   return;
 }
 
@@ -11823,8 +12309,11 @@ void T1C_draw_text_or_graphics(byte param)
 byte prepare_draw_midway_logo_and_copyright_text(byte param_1)
 
 {
+  byte bVar1;
+  
   draw_the_midway_logo_and_copyright();
-  if ((hardware_DSW1 & 0x30) != 0x30) {
+  bVar1 = read_volatile_1(hardware_DSW1);
+  if ((bVar1 & 0x30) != 0x30) {
     return param_1;
   }
   return 0x20;
@@ -11882,7 +12371,30 @@ void prepare_draw_READY(void)
 void draw_the_midway_logo_and_copyright(void)
 
 {
-  insert_task((word *)&task_draw_c_midway_mfg_co);
+  byte bVar1;
+  byte *pbVar2;
+  
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_draw_text_or_graphics_c_midway_mfg_co);
+                    // WARNING: Return address prevents inlining here
+  insert_task(&task_draw_text_or_graphics_t_1980_1981);
+  pbVar2 = hardware_screen_maze_area + 0x25a;
+  bVar1 = 0xbf;
+  do {
+    *pbVar2 = bVar1;
+    pbVar2[0x400] = 1;
+    pbVar2 = pbVar2 + -(ushort)(ARRAY_ram_a000 + 0x5bff < pbVar2);
+    pbVar2[1] = bVar1 - 4;
+    pbVar2[0x401] = 1;
+    pbVar2 = pbVar2 + (pbVar2 + 1 <= ARRAY_ram_a000 + 0x5bff);
+    pbVar2[1] = bVar1 - 8;
+    pbVar2[0x401] = 1;
+    pbVar2 = pbVar2 + (pbVar2 + 1 <= ARRAY_ram_a000 + 0x5bff);
+    pbVar2[1] = bVar1 - 0xc;
+    pbVar2[0x401] = 1;
+    pbVar2 = pbVar2 + 0x401 + (-0x3e3 - (ushort)(ARRAY_ram_a000 + 0x5bff < pbVar2 + 1));
+    bVar1 = bVar1 - 1;
+  } while (bVar1 != 0xbb);
   return;
 }
 
