@@ -5,7 +5,7 @@
 #include <stdio.h>
 
 
-#define BYTE_TO_BINARY_PATTERN "%c%c%c%c%c%c%c%c"
+#define BYTE_TO_BINARY_PATTERN "%c%c_%c%c_%c%c_%c%c"
 #define BYTE_TO_BINARY(byte)  \
   (byte & 0x80 ? '1' : '0'), \
   (byte & 0x40 ? '1' : '0'), \
@@ -192,7 +192,10 @@ void main(void)
                 // printf(BYTE_TO_BINARY_PATTERN, BYTE_TO_BINARY(charmap[i*8*8 + y*8 + x]) );
                 charmap[i*8*8 + y*8 + x] *= 64;
             }
-            printf("0x%04x,\n", width);
+            // printf("0x%04x,\n", width);
+            printf("0b"BYTE_TO_BINARY_PATTERN"_"BYTE_TO_BINARY_PATTERN",\n", 
+                BYTE_TO_BINARY(width>>8), BYTE_TO_BINARY(width));
+
         }
         printf("    ],");
     }
@@ -223,11 +226,11 @@ void main(void)
             unsigned int width = 0;
             for (int x=0; x<16; x++) {
                 width |= (((unsigned int)spritemap[i*16*16 + y*16 + x]) << 30) >> 2*x;
-                // printf("%d,", spritemap[i*16*16 + y*16 + x] );
                 spritemap[i*16*16 + y*16 + x] *= 64;
-                // printf(BYTE_TO_BINARY_PATTERN, BYTE_TO_BINARY(spritemap[i*16*16 + y*16 + x]) );
             }
-            printf("0x%08x,\n", width);
+            printf("0b"BYTE_TO_BINARY_PATTERN"_"BYTE_TO_BINARY_PATTERN"_"BYTE_TO_BINARY_PATTERN"_"BYTE_TO_BINARY_PATTERN",\n", 
+                BYTE_TO_BINARY(width>>24), BYTE_TO_BINARY(width>>16),
+                BYTE_TO_BINARY(width>>8), BYTE_TO_BINARY(width));
         }
         printf("    ],");
     }
