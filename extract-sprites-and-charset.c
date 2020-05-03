@@ -24,7 +24,7 @@ char rom_5f[4096];
 unsigned char charmap[256*8*8];      // Character data for 256 8x8 characters
 unsigned char spritemap[64*16*16];   // Sprite data for 64 16x16 sprites
 unsigned char   palette[0x20];
-unsigned char   color[0x100];
+unsigned char   lookuprom[0x100];
 unsigned char wavedata[0x100];
 unsigned        palette_[256];          // Color palette
 
@@ -106,7 +106,7 @@ unsigned decodePaletteByte( unsigned char value )
     return (red << 16 ) | (green << 8) | blue;
 }
 
-void setColorROMs( const unsigned char * palette, const unsigned char * color )
+void setColorROMs( const unsigned char * palette, const unsigned char * lookuprom )
 {
     unsigned decoded_palette[0x20];
 
@@ -117,7 +117,7 @@ void setColorROMs( const unsigned char * palette, const unsigned char * color )
     }
 
     for( i=0; i<256; i++ ) {
-        palette_[i] = decoded_palette[ color[i] & 0x0F ];
+        palette_[i] = decoded_palette[ lookuprom[i] & 0x0F ];
     }
 }
 
@@ -188,11 +188,8 @@ void main(void)
             unsigned int width = 0;
             for (int x=0; x<8; x++) {
                 width |= (((unsigned int)charmap[i*8*8 + y*8 + x]) << 14) >> 2*x;
-                // printf("%d,", charmap[i*8*8 + y*8 + x] );
-                // printf(BYTE_TO_BINARY_PATTERN, BYTE_TO_BINARY(charmap[i*8*8 + y*8 + x]) );
                 charmap[i*8*8 + y*8 + x] *= 64;
             }
-            // printf("0x%04x,\n", width);
             printf("0b"BYTE_TO_BINARY_PATTERN"_"BYTE_TO_BINARY_PATTERN",\n", 
                 BYTE_TO_BINARY(width>>8), BYTE_TO_BINARY(width));
 
@@ -243,14 +240,14 @@ void main(void)
     /********************************************/
 
     f = open("82s126.4a", O_RDONLY);
-    read(f, color, 256);
+    read(f, lookuprom, 256);
     close(f);
 
     f = open("82s123.7f", O_RDONLY);
     read(f, palette, 32);
     close(f);
 
-    setColorROMs(palette, color);
+    setColorROMs(palette, lookuprom);
 
     printf("\n");
     printf("/// each palette_ entry contains a color in RGB format encoded as 0x00rrggbb.\n");
