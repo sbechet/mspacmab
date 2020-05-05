@@ -179,7 +179,7 @@ void main(void)
     decodeCharSet( rom_5e, charmap);
 
     printf("/// Each tile entry are 8x8 pixels size. 2-bit per pixel.\n");
-    printf("const TILE: [ [u16; 8]; 256] = [\n");
+    printf("pub const TILE: [ [u16; 8]; 256] = [\n");
     for (int i=0; i<256; i++) {
         printf("[\n");
         for (int y=0; y<8; y++) {
@@ -214,7 +214,7 @@ void main(void)
 
     printf("\n");
     printf("/// each sprite entry are 16x16 pixels size. 2-bit per pixel.\n");
-    printf("const SPRITE: [ [u32; 16]; 64] = [\n");
+    printf("pub const SPRITE: [ [u32; 16]; 64] = [\n");
     for (int i=0; i<64; i++) {
         printf("[\n");
         for (int y=0; y<16; y++) {
@@ -251,7 +251,7 @@ void main(void)
 
     printf("\n");
     printf("/// each palette_ entry contains a color in RGB format encoded as 0x00rrggbb.\n");
-    printf("const PALETTE: [u32; 256] = [\n");
+    printf("pub const PALETTE: [u32; 256] = [\n");
     for (int i=0; i<256; i++) {
         printf("    0x%08X,\n", palette_[i]);
     }
@@ -266,7 +266,7 @@ void main(void)
 
     printf("\n");
     printf("/// Namco 3-channel Wave Sound Generator wave data (8 waveforms with 32 4-bit entries each)\n");
-    printf("const WAVEDATA: [ [u8; 32]; 8] = [\n");
+    printf("pub const WAVEDATA: [ [u8; 32]; 8] = [\n");
 
     for (int i=0; i<8; i++) {
         printf("    [");
