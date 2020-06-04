@@ -112,7 +112,11 @@ fn help() {
 }
 
 fn reverse(offset: usize) {
-    println!("{:?}", REVERSE_VIDEO[offset]);
+    let r = REVERSE_VIDEO[offset];
+    println!("{:?}", r);
+    if r.1 >= 2 {
+        println!("w/ correction: ({},{})", r.0 - 2, r.1 );
+    }
 }
 
 fn main() -> Result<(), core::convert::Infallible> {
