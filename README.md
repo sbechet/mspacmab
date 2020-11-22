@@ -2,7 +2,7 @@
 
 You must install to play: [gcc](https://gcc.gnu.org/), [imagemagick](https://imagemagick.org), [ghidra](https://ghidra-sre.org/) and maybe [rustup](https://rustup.rs/).
 
-Use ghidra on `mspacmab_romram.gzf` file and help me if you can :-)
+Use ghidra on `mspacmab_romram.gzf` file and backport to `mspacmab-rs` project if you can :-)
 
 ## mspacmab-retro installation
 

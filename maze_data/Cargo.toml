@@ -1,0 +1,10 @@
+[package]
+name = "maze_data"
+version = "0.1.0"
+authors = ["Sebastien Bechet <sebastien.bechet@osinix.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies.video_offset_to_xy]
+path = "../video_offset_to_xy/"
